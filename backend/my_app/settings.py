@@ -89,7 +89,7 @@ DATABASES = {
 }
 # Handling environmental variables according to README.md
 database = os.environ.get("DATABASE")
-if not database:
+if database:
     if database == "SQLITE3":
         DATABASES["default"] = {
             "ENGINE": "django.db.backends.sqlite3",
