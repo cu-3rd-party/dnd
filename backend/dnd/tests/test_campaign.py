@@ -21,9 +21,7 @@ class TestCampaignCreate(APITestCase):
 
     def setUp(self):
         self.url = reverse("api-1.0.0:create_campaign_api")
-        self.player = Player.objects.create(
-            telegram_id=111, verified=True
-        )
+        self.player = Player.objects.create(telegram_id=111, verified=True)
 
     def test_campaign_create_success(self):
         data = {
