@@ -11,7 +11,7 @@ class TestGetCharacter(APITestCase):
     def test_get_character_success(self):
         url = reverse("api-1.0.0:get_character_api")
 
-        owner_obj = Player.objects.create(telegram_id=1, bio="test bio")
+        owner_obj = Player.objects.create(telegram_id=1)
         campaign_obj = Campaign.objects.create(title="test")
         char_obj = Character.objects.create(
             owner=owner_obj, campaign=campaign_obj
