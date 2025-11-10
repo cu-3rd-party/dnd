@@ -9,6 +9,7 @@ import redis.asyncio as redis
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
+from aiogram.fsm.storage.base import DefaultKeyBuilder
 from aiogram.fsm.storage.redis import RedisStorage
 from aiogram_dialog import setup_dialogs
 
@@ -62,7 +63,8 @@ async def run_bot() -> None:
             port=settings.REDIS_PORT,
             password=settings.REDIS_PASSWORD,
             db=settings.REDIS_DB,
-        )
+        ),
+        key_builder=DefaultKeyBuilder(with_destiny=True)
     )
 
     bot = Bot(
