@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     ADMIN_IDS: Set[int]
 
     BACKEND_URL: str = "http://backend:8000"
+    PATH_TO_DEFAULT_ICON: str = "assets/default_icon.jpg"
 
     REDIS_HOST: str
     REDIS_PORT: int
