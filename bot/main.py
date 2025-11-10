@@ -21,8 +21,7 @@ HANDLERS_PACKAGE = "handlers"
 HANDLERS_PATH = Path(__file__).parent / "handlers"
 
 
-def register_all_middlewares(dp: Dispatcher) -> None:
-    ...
+def register_all_middlewares(dp: Dispatcher) -> None: ...
 
 
 def _iter_handler_modules() -> Iterable[ModuleType]:
@@ -48,12 +47,10 @@ def register_all_handlers(dp: Dispatcher) -> None:
         logger.warning("Не найдено ни одного роутера для регистрации")
 
 
-async def on_startup(bot: Bot) -> None:
-    ...
+async def on_startup(bot: Bot) -> None: ...
 
 
-async def on_shutdown(bot: Bot) -> None:
-    ...
+async def on_shutdown(bot: Bot) -> None: ...
 
 
 async def run_bot() -> None:
@@ -64,7 +61,7 @@ async def run_bot() -> None:
             password=settings.REDIS_PASSWORD,
             db=settings.REDIS_DB,
         ),
-        key_builder=DefaultKeyBuilder(with_destiny=True)
+        key_builder=DefaultKeyBuilder(with_destiny=True),
     )
 
     bot = Bot(

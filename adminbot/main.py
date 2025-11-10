@@ -17,7 +17,10 @@ async def main() -> None:
         handlers.start_router,
     )
 
-    bot = Bot(token=settings.TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+    bot = Bot(
+        token=settings.TOKEN,
+        default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+    )
 
     await dp.start_polling(bot)
 
