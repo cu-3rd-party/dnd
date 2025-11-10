@@ -4,9 +4,9 @@ from aiogram.types import CallbackQuery
 from aiogram_dialog import Dialog, Window, DialogManager
 from aiogram_dialog.widgets.kbd import Button, Column
 from aiogram_dialog.widgets.text import Const
+from states.create_campaign import CreateCampaignStates
 
 from settings import settings
-from states.create_campaign import CreateCampaignStates
 from states.mainmenu import MainMenuStates
 
 router = Router()

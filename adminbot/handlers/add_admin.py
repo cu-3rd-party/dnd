@@ -4,9 +4,9 @@ from aiogram_dialog import Dialog, Window, DialogManager
 from aiogram_dialog.widgets.input import TextInput
 from aiogram_dialog.widgets.kbd import Cancel
 from aiogram_dialog.widgets.text import Const
-
 from states.add_admin import AddAdminStates
 from states.campaign_interaction import CampaignInteractionStates
+
 from .start_menu import CAMPAIGNS
 
 router = Router()

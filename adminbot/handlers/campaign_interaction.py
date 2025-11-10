@@ -4,8 +4,8 @@ from aiogram_dialog import Dialog, Window, DialogManager
 from aiogram_dialog.widgets.kbd import Button, Back, Cancel, Row
 from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format
-
 from states.campaign_interaction import CampaignInteractionStates
+
 from .start_menu import CAMPAIGNS
 
 router = Router()

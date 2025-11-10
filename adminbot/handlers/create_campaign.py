@@ -10,8 +10,8 @@ from aiogram_dialog.widgets.input import TextInput, MessageInput
 from aiogram_dialog.widgets.kbd import Button, Back, Cancel, Row
 from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format
-
 from states.create_campaign import CreateCampaignStates
+
 from states.mainmenu import MainMenuStates
 
 router = Router()
