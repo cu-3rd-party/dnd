@@ -1,4 +1,3 @@
-import json
 import logging
 
 from aiogram import Router
@@ -10,8 +9,10 @@ from aiogram_dialog.widgets.input import TextInput, MessageInput
 from aiogram_dialog.widgets.kbd import Button, Back, Cancel, Row
 from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format
-from states.create_campaign import CreateCampaignStates
+from httpx import AsyncClient
 
+from settings import settings
+from states.create_campaign import CreateCampaignStates
 from states.mainmenu import MainMenuStates
 
 router = Router()
@@ -41,18 +42,7 @@ async def on_description_entered(
 async def on_icon_entered(
     message: Message, widget: MessageInput, dialog_manager: DialogManager
 ):
-    if message.photo:
-        dialog_manager.dialog_data["icon"] = message.photo[
-            -1
-        ].model_dump_json()
-
-    else:
-        # TODO:
-        # В данный момент если попытаться вставить пользовательскую иконку, то
-        # всё равно будет вставляться дефолтная, не уверен как мы будем работать с медиа,
-        # поэтому пока что оставил так
-
-        dialog_manager.dialog_data["icon"] = "DEFAULT_ICON"
+    dialog_manager.dialog_data["icon"] = message.photo[-1].file_id
 
     await dialog_manager.next()
 
@@ -74,22 +64,37 @@ async def on_skip_icon(
 async def on_confirm(
     callback: CallbackQuery, button: Button, dialog_manager: DialogManager
 ):
-    campaign_data = dialog_manager.dialog_data
+    async with AsyncClient(timeout=30.0) as client:
+        (
+            await client.get(f"{settings.BACKEND_URL}/api/ping/")
+        ).raise_for_status()
+        response = await client.post(
+            f"{settings.BACKEND_URL}/api/campaign/create/",
+            json={
+                "telegram_id": callback.from_user.id,
+                "title": dialog_manager.dialog_data.get("name", ""),
+                "icon": dialog_manager.dialog_data.get("icon", ""),
+                "description": dialog_manager.dialog_data.get(
+                    "description", "не указано"
+                ),
+            },
+        )
 
-    # * Здесь будет вызов API для создания кампании``
-    # response = requests.post('/api/campaign/create/', json=campaign_data)
+        logger.debug(
+            f"Sent request to create campaign for use {callback.from_user.id} and got status code {response.status_code}"
+        )
+        if response.status_code != 201:
+            logger.error(
+                f"Failed to create campaign for user {callback.from_user.id}: {response.status_code}"
+            )
+            await callback.answer(
+                "Кампания не была создана успешно, попробуйте еще раз",
+                show_alert=True,
+            )
+            return
 
-    # POST /api/campaign/create/ требует
-    # telegram_id - длинное такое число, уникальный айдишник в тг
-    # title - название новой кампании (до 256 символов)
-    # description - описание (до 1024 символов) (опционально)
-    # icon - иконка в base64 (опционально)
-
-    # Сразу после вызова создания кампании, фетчим список кампаний т.к.
-    # следующим же действием переходим в основное меню (где нужен список).
-    # Возможно имеет смысл здесь оставить sleep(t)
-
-    await dialog_manager.start(MainMenuStates.main)
+        await callback.answer("Кампания создана успешно")
+        await dialog_manager.start(MainMenuStates.main)
 
 
 async def on_cancel(
@@ -102,10 +107,9 @@ async def on_cancel(
 async def get_confirm_data(dialog_manager: DialogManager, **kwargs):
     logger.debug(dialog_manager.dialog_data)
 
-    icon_data = json.loads(dialog_manager.dialog_data["icon"])
     icon = MediaAttachment(
         type=ContentType.PHOTO,
-        file_id=MediaId(icon_data["file_id"]),
+        file_id=MediaId(dialog_manager.dialog_data["icon"]),
     )
 
     return {

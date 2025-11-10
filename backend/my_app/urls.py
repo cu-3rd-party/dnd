@@ -16,13 +16,38 @@ Including another URLconf
 """
 
 from django.contrib import admin
+from django.http import JsonResponse
+from django.urls import get_resolver
 from django.urls import path
 
 from .api import api
 from .views import health_view
 
+
+def debug_urls(request):
+    resolver = get_resolver()
+    url_patterns = []
+
+    def list_urls(patterns, prefix=""):
+        for pattern in patterns:
+            if hasattr(pattern, "url_patterns"):
+                list_urls(pattern.url_patterns, prefix + str(pattern.pattern))
+            else:
+                url_patterns.append(
+                    {
+                        "pattern": prefix + str(pattern.pattern),
+                        "name": getattr(pattern, "name", "No name"),
+                        "callback": str(pattern.callback),
+                    }
+                )
+
+    list_urls(resolver.url_patterns)
+    return JsonResponse({"urls": url_patterns})
+
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", api.urls),
     path("health/", health_view),
+    path("debug-urls/", debug_urls),
 ]
