@@ -1,6 +1,10 @@
+import base64
+import io
 import logging
 
-from aiogram import Router
+from PIL import Image
+from aiofiles import tempfile
+from aiogram import Router, Bot
 from aiogram.enums import ContentType
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import Dialog, Window, DialogManager
@@ -57,23 +61,35 @@ async def on_skip_description(
 async def on_skip_icon(
     callback: CallbackQuery, button: Button, dialog_manager: DialogManager
 ):
-    dialog_manager.dialog_data["icon"] = "DEFAULT_ICON"
+    dialog_manager.dialog_data["icon"] = None
     await dialog_manager.next()
+
+
+async def get_icon(bot: Bot, file_id: str | None):
+    if not file_id:
+        return ""
+    file = await bot.get_file(file_id)
+    temp_input = await tempfile.NamedTemporaryFile(suffix=".raw")
+    await bot.download_file(file.file_path, temp_input.name)
+    with open(temp_input.name, "rb") as f:
+        img = Image.open(f)
+        output = io.BytesIO()
+        img.save(output, format="PNG")
+        return base64.b64encode(output.getvalue()).decode()
 
 
 async def on_confirm(
     callback: CallbackQuery, button: Button, dialog_manager: DialogManager
 ):
     async with AsyncClient(timeout=30.0) as client:
-        (
-            await client.get(f"{settings.BACKEND_URL}/api/ping/")
-        ).raise_for_status()
         response = await client.post(
             f"{settings.BACKEND_URL}/api/campaign/create/",
             json={
                 "telegram_id": callback.from_user.id,
                 "title": dialog_manager.dialog_data.get("name", ""),
-                "icon": dialog_manager.dialog_data.get("icon", ""),
+                "icon": await get_icon(
+                    callback.bot, dialog_manager.dialog_data.get("icon", "")
+                ),
                 "description": dialog_manager.dialog_data.get(
                     "description", "не указано"
                 ),
@@ -107,10 +123,13 @@ async def on_cancel(
 async def get_confirm_data(dialog_manager: DialogManager, **kwargs):
     logger.debug(dialog_manager.dialog_data)
 
-    icon = MediaAttachment(
-        type=ContentType.PHOTO,
-        file_id=MediaId(dialog_manager.dialog_data["icon"]),
-    )
+    if dialog_manager.dialog_data["icon"]:
+        icon = MediaAttachment(
+            type=ContentType.PHOTO,
+            file_id=MediaId(dialog_manager.dialog_data["icon"]),
+        )
+    else:
+        icon = ""
 
     return {
         "name": dialog_manager.dialog_data.get("name", ""),
@@ -159,7 +178,7 @@ create_campaign_dialog = Dialog(
         state=CreateCampaignStates.enter_icon,
     ),
     Window(
-        DynamicMedia("icon"),
+        DynamicMedia("icon", when="icon"),
         Format(
             "**Подтверждение создания**\n\n"
             "Название: {name}\n"

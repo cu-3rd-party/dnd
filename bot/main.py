@@ -13,6 +13,7 @@ from aiogram.fsm.storage.base import DefaultKeyBuilder
 from aiogram.fsm.storage.redis import RedisStorage
 from aiogram_dialog import setup_dialogs
 
+from middlewares.register import RegisterMiddleware
 from settings import settings
 
 logger = logging.getLogger(__name__)
@@ -21,7 +22,8 @@ HANDLERS_PACKAGE = "handlers"
 HANDLERS_PATH = Path(__file__).parent / "handlers"
 
 
-def register_all_middlewares(dp: Dispatcher) -> None: ...
+def register_all_middlewares(dp: Dispatcher) -> None:
+    dp.message.middleware.register(RegisterMiddleware())
 
 
 def _iter_handler_modules() -> Iterable[ModuleType]:
