@@ -13,10 +13,11 @@ class TestUploadCharacter(APITestCase):
             open("dnd/tests/example-character.json", encoding="utf-8")
         )
         user_id = 1
+        telegram_id = 123
         campaign_obj = Campaign.objects.create(title="test campaign")
         player_obj = Player.objects.create(
             id=user_id,
-            telegram_id=123,
+            telegram_id=telegram_id,
             admin=False,
         )
         CampaignMembership.objects.create(
@@ -24,10 +25,10 @@ class TestUploadCharacter(APITestCase):
             campaign=campaign_obj,
         )
         self.assertEqual(Character.objects.all().count(), 0)
-        response = self.client.post(
+        response = self.client.put(
             url,
             data={
-                "owner_id": user_id,
+                "owner_telegram_id": telegram_id,
                 "campaign_id": campaign_obj.id,
                 "data": data_obj,
             },
