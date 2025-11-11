@@ -7,7 +7,7 @@ from aiogram.types import User, Message
 from aiogram_dialog import DialogManager, Dialog, Window
 from aiogram_dialog.api.entities import MediaAttachment
 from aiogram_dialog.widgets.input import MessageInput
-from aiogram_dialog.widgets.kbd import Button, Cancel
+from aiogram_dialog.widgets.kbd import Button, Cancel, Row
 from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Format, Const
 from httpx import AsyncClient
@@ -45,17 +45,8 @@ async def char_getter(
         ret["chardata"] = character_data
 
         info: CharacterData = parse_character_data(character_data)
-        ret["chardata_preview"] = (
-            f"<b>Имя:</b> {info.name}\n"
-            f"<b>Класс:</b> {info.klass} {f'({info.subclass})' if info.subclass else ''}\n"
-            f"<b>Уровень:</b> {info.level}\n"
-            f"<b>Хиты:</b> {info.hp.current}/{info.hp.max} {f'(+{info.hp.temp} временное)' if info.hp.temp else ''}\n"
-            f"<b>Класс брони:</b> {info.hp.ac}\n"
-            f"<b>Скорость:</b> {info.hp.speed} фт.\n"
-            f"<b>Раса:</b> {info.race}\n"
-            f"<b>Предыстория:</b> {info.background}\n"
-            f"<b>Мировоззрение:</b> {info.alignment}"
-        )
+        ret["chardata_preview"] = info.preview()
+        ret["stats_preview"] = info.preview_stats()
         avatar_url = character_data.get("avatar", {}).get("webp")
 
         avatar = None
@@ -116,6 +107,20 @@ router.include_router(
                 id="to_upload_character",
                 on_click=lambda c, b, m: m.switch_to(CampaignDialog.upload),
             ),
+            Row(
+                Button(
+                    Const("Характеристики"),
+                    id="stats",
+                    on_click=lambda c, b, m: m.switch_to(CampaignDialog.stats),
+                ),
+                Button(
+                    Const("Инвентарь"),
+                    id="inventory",
+                    on_click=lambda c, b, m: m.switch_to(
+                        CampaignDialog.inventory
+                    ),
+                ),
+            ),
             Cancel(Const("Назад")),
             getter=char_getter,
             state=CampaignDialog.preview,
@@ -129,6 +134,16 @@ router.include_router(
                 func=on_upload,
             ),
             state=CampaignDialog.upload,
+        ),
+        Window(
+            Format("{stats_preview}"),
+            Button(
+                Const("Назад"),
+                on_click=lambda c, b, m: m.switch_to(CampaignDialog.preview),
+                id="back",
+            ),
+            getter=char_getter,
+            state=CampaignDialog.stats,
         ),
     )
 )

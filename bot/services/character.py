@@ -71,6 +71,37 @@ class CharacterData(BaseModel):
     class Config:
         validate_by_name = True
 
+    def preview(self) -> str:
+        return (
+            f"<b>Имя:</b> {self.name}\n"
+            f"<b>Класс:</b> {self.klass} {f'({self.subclass})' if self.subclass else ''}\n"
+            f"<b>Уровень:</b> {self.level}\n"
+            f"<b>Хиты:</b> {self.hp.current}/{self.hp.max} {f'(+{self.hp.temp} временное)' if self.hp.temp else ''}\n"
+            f"<b>Класс брони:</b> {self.hp.ac}\n"
+            f"<b>Скорость:</b> {self.hp.speed} фт.\n"
+            f"<b>Раса:</b> {self.race}\n"
+            f"<b>Предыстория:</b> {self.background}\n"
+            f"<b>Мировоззрение:</b> {self.alignment}"
+        )
+
+    def preview_stats(self) -> str:
+        return "\n".join(
+            [
+                f"<b>{STATS_CONVERSION[key]}:</b> {value.score}({value.modifier})"
+                for key, value in self.stats.items()
+            ]
+        )
+
+
+STATS_CONVERSION = {
+    "str": "Сила",
+    "dex": "Ловкость",
+    "con": "Телосложение",
+    "int": "Интеллект",
+    "wis": "Мудрость",
+    "cha": "Харизма",
+}
+
 
 def parse_character_data(data: dict) -> CharacterData:
     """
