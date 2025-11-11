@@ -10,6 +10,7 @@ from aiogram_dialog.widgets.kbd import Button, Cancel
 from aiogram_dialog.widgets.text import Format, Const
 from httpx import AsyncClient
 
+from services.character import parse_character_data
 from settings import settings
 from states.campaign import CampaignDialog
 
@@ -31,17 +32,23 @@ async def char_getter(
         if response.status_code != 200:
             ret["to_import"] = True
             ret["preview_available"] = False
-        else:
-            response_data = response.json()
-            ret["to_import"] = False
-            ret["preview_available"] = True
-            ret["chardata"] = response_data["data"]
-            str_data = json.dumps(response_data["data"])
-            ret["chardata_preview"] = (
-                str_data[:PREVIEW_LENGTH] + "..."
-                if len(str_data) > PREVIEW_LENGTH
-                else str_data
-            )
+            return ret
+
+        response_data = response.json()
+        ret["to_import"] = False
+        ret["preview_available"] = True
+
+        data = response_data["data"]
+        character_data = json.loads(data["data"])
+        ret["chardata"] = character_data
+
+        str_data = data["data"]
+        info = parse_character_data(character_data)
+        ret["chardata_preview"] = (
+            f"Его имя {info.name}\n"
+            f"Его уровень {info.level}\n"
+            f"Его трейты {info.traits}\n"
+        )
     return ret
 
 
