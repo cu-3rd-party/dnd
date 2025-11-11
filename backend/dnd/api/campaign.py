@@ -201,12 +201,14 @@ def edit_permissions_api(
 
 @router.get(
     "{campaign_id}/player/{telegram_id}/characters/get/",
-    response = {
+    response={
         200: CharacterOut,
         404: NotFoundError,
-    }
+    },
 )
-def get_player_characters(request: HttpRequest, campaign_id: int, telegram_id: int):
+def get_player_characters(
+    request: HttpRequest, campaign_id: int, telegram_id: int
+):
     player = get_object_or_404(Player, telegram_id=telegram_id)
     campaign = get_object_or_404(Campaign, id=campaign_id)
 

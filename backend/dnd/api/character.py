@@ -42,7 +42,9 @@ def upload_character_api(request: HttpRequest, upload: UploadCharacter):
 
     campaign_obj = get_object_or_404(Campaign, id=upload.campaign_id)
 
-    char_obj, created = Character.objects.update_or_create(owner=owner_obj, campaign=campaign_obj)
+    char_obj, created = Character.objects.update_or_create(
+        owner=owner_obj, campaign=campaign_obj
+    )
     char_obj.save_data(upload.data)
 
     return 201 if created else 200, CharacterOut(

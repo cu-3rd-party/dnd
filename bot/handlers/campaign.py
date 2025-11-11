@@ -37,7 +37,11 @@ async def char_getter(
             ret["preview_available"] = True
             ret["chardata"] = response_data["data"]
             str_data = json.dumps(response_data["data"])
-            ret["chardata_preview"] = str_data[:PREVIEW_LENGTH] + "..." if len(str_data) > PREVIEW_LENGTH else str_data
+            ret["chardata_preview"] = (
+                str_data[:PREVIEW_LENGTH] + "..."
+                if len(str_data) > PREVIEW_LENGTH
+                else str_data
+            )
     return ret
 
 
@@ -67,7 +71,9 @@ async def on_upload(
             },
         )
         if response.status_code != 201 and response.status_code != 200:
-            await message.answer("Не получилось загрузить персонажа, попробуй еще раз")
+            await message.answer(
+                "Не получилось загрузить персонажа, попробуй еще раз"
+            )
             return
         await message.answer("Успешно загружено")
         await dialog_manager.switch_to(CampaignDialog.preview)
