@@ -1,4 +1,5 @@
-﻿from typing import Dict, List
+﻿from functools import lru_cache
+from typing import Dict, List
 
 from pydantic import BaseModel, Field
 
@@ -71,6 +72,7 @@ class CharacterData(BaseModel):
         allow_population_by_field_name = True
 
 
+@lru_cache()
 def parse_character_data(data: dict) -> CharacterData:
     """
     Превращает json персонажа Long Story Short в адекватный Pydantic объект
@@ -156,6 +158,7 @@ def parse_character_data(data: dict) -> CharacterData:
     )
 
 
+@lru_cache()
 def extract_telegram_text(text_data):
     """
     Превращает json документооборот в HTML
