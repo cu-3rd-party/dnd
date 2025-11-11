@@ -56,14 +56,14 @@ async def get_user_campaigns(telegram_id: int) -> List[dict]:
             params={"user_id": telegram_id, "owned": True},
         )
         if response.status_code != 200:
-            logger.warning("Backend returned non-200 code when fetching campaigns data")
+            logger.warning(
+                "Backend returned non-200 code when fetching campaigns data"
+            )
             return []
 
         data = response.json()
 
-        logger.debug(
-            "Backend returned the following campaigns data: %s", data
-        )
+        logger.debug("Backend returned the following campaigns data: %s", data)
 
         if isinstance(data, list):
             return data
