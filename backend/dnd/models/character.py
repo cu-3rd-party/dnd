@@ -27,7 +27,7 @@ class Character(models.Model):
     def save_data(self, data: dict):
         """Internal function that saves data to a file stored in database."""
         self.data.save(
-            f"{self.id}.json", ContentFile(json.dumps(data)), save=False
+            f"{self.id}.json", ContentFile(json.dumps(data)), save=True
         )
 
     def get(self, *args):

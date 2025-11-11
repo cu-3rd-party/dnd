@@ -1,13 +1,15 @@
 import logging
-from aiogram import Router
-from aiogram.types import User, CallbackQuery
-from aiogram_dialog import Dialog, Window, DialogManager
-from aiogram_dialog.widgets.kbd import Button, Column, Select
-from aiogram_dialog.widgets.text import Const, Format
-from httpx import AsyncClient, HTTPStatusError
 from typing import Optional, List
 
+from aiogram import Router
+from aiogram.types import User, CallbackQuery
+from aiogram_dialog import DialogManager, Dialog, Window
+from aiogram_dialog.widgets.kbd import Button, Select, Column
+from aiogram_dialog.widgets.text import Format, Const
+from httpx import AsyncClient, HTTPStatusError
+
 from settings import settings
+from states.campaign import CampaignDialog
 from states.mainmenu import MainMenu
 
 
@@ -124,7 +126,11 @@ async def campaigns_detailed_getter(
 
 async def on_campaign_selected(
     callback: CallbackQuery, select, manager: DialogManager, item_id: str
-): ...
+):
+    logger.debug("on_campaign_selected with item_id %s", item_id)
+    await manager.start(
+        CampaignDialog.preview, data={"campaign_id": int(item_id)}
+    )
 
 
 router = Router()

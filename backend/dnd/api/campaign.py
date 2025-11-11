@@ -1,4 +1,5 @@
 import base64
+import logging
 from io import BytesIO
 
 from PIL import Image as PILImage
@@ -9,7 +10,7 @@ from ninja import Router
 from ninja.errors import HttpError
 from ninja.responses import Response
 
-from dnd.models import Campaign, CampaignMembership, Player
+from dnd.models import Campaign, CampaignMembership, Player, Character
 from dnd.schemas import (
     AddToCampaignRequest,
     CampaignEditPermissions,
@@ -20,8 +21,10 @@ from dnd.schemas import (
     NotFoundError,
     ValidationError,
 )
+from dnd.schemas.character import CharacterOut
 
 router = Router()
+logger = logging.getLogger(__name__)
 
 
 @router.post(
@@ -193,4 +196,26 @@ def edit_permissions_api(
     return 200, Message(
         message=f"Updated user {body.user_id} role "
         f"to {body.status} in campaign {campaign_obj.id}"
+    )
+
+
+@router.get(
+    "{campaign_id}/player/{telegram_id}/characters/get/",
+    response = {
+        200: CharacterOut,
+        404: NotFoundError,
+    }
+)
+def get_player_characters(request: HttpRequest, campaign_id: int, telegram_id: int):
+    player = get_object_or_404(Player, telegram_id=telegram_id)
+    campaign = get_object_or_404(Campaign, id=campaign_id)
+
+    char_obj = get_object_or_404(Character, owner=player, campaign=campaign)
+
+    return 200, CharacterOut(
+        id=char_obj.id,
+        owner_id=char_obj.owner_id,
+        owner_telegram_id=char_obj.owner.telegram_id,
+        data=char_obj.load_data(),
+        campaign_id=char_obj.campaign_id,
     )

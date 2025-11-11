@@ -12,6 +12,7 @@
       - .env
     volumes:
       - campaign_icons:/app/campaign_icons
+      - chardata:/app/chardata
   db:
     image: postgres:18-alpine
     restart: unless-stopped
@@ -62,3 +63,4 @@ volumes:
   postgres_data:
   redis_data:
   campaign_icons:
+  chardata:
