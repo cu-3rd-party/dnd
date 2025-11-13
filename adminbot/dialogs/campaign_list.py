@@ -1,3 +1,4 @@
+import logging
 from aiogram import Router
 from aiogram_dialog import Dialog, Window, DialogManager, SubManager
 from aiogram_dialog.widgets.kbd import Button, Group, Row, ListGroup
@@ -6,6 +7,8 @@ from aiogram.types import CallbackQuery
 
 from services.api_client import api_client
 from . import states as campaign_states
+
+logger = logging.getLogger(__name__)
 
 
 # === Гетеры ===
@@ -47,6 +50,7 @@ async def on_campaign_selected(
     callback: CallbackQuery, button: Button, dialog_manager: SubManager
 ):
     dialog_manager.dialog_data["selected_campaign_id"] = dialog_manager.item_id
+    logger.info(f"Selected campaign ID: {dialog_manager.item_id}")
 
     campaigns_data = await get_campaigns_data(dialog_manager)
     selected_campaign = next(
@@ -57,11 +61,15 @@ async def on_campaign_selected(
         ),
         None,
     )
+    # logger.info(f"Selected campaign data: {selected_campaign}")
 
     if selected_campaign:
         dialog_manager.dialog_data["selected_campaign"] = selected_campaign
 
-    await dialog_manager.start(campaign_states.CampaignManage.main)
+    await dialog_manager.start(
+        campaign_states.CampaignManage.main,
+        data={"selected_campaign": selected_campaign},
+    )
 
 
 async def on_page_change(

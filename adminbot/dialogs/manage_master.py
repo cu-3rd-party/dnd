@@ -19,7 +19,8 @@ from . import states as campaign_states
 
 async def get_permissions_data(dialog_manager: DialogManager, **kwargs):
     """Получение данных о правах доступа к кампании"""
-    campaign = dialog_manager.dialog_data.get("selected_campaign", {})
+    campaign = dialog_manager.start_data.get("selected_campaign", {})
+    dialog_manager.dialog_data["selected_campaign"] = campaign
     campaign_id = campaign.get("id")
 
     # Заглушка данных о пользователях и их правах

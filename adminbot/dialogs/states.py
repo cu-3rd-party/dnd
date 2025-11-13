@@ -10,7 +10,7 @@ class CampaignManage(StatesGroup):
     edit_info = State()
     manage_characters = State()
     permissions = State()
-    stats = State()
+    # stats = State()
 
 
 class CreateCampaign(StatesGroup):
@@ -28,13 +28,13 @@ class EditCampaignInfo(StatesGroup):
     confirm = State()
 
 
-class ManageCharacters(StatesGroup):
-    main = State()
-    add_character = State()
-    remove_character = State()
-
-
 class EditPermissions(StatesGroup):
     main = State()
     select_permission = State()
     invite_master = State()
+
+
+class ManageCharacters(StatesGroup):
+    main = State()
+    view_character = State()
+    edit_character = State()

@@ -10,7 +10,8 @@ from . import states as campaign_states
 
 # === Гетеры ===
 async def get_campaign_edit_data(dialog_manager: DialogManager, **kwargs):
-    campaign = dialog_manager.dialog_data.get("selected_campaign", {})
+    campaign = dialog_manager.start_data.get("selected_campaign", {})
+    dialog_manager.dialog_data["selected_campaign"] = campaign
     return {
         "campaign_title": campaign.get("title", "Неизвестная группа"),
         "campaign_description": campaign.get("description", "Описание отсутствует"),
@@ -112,7 +113,9 @@ edit_title_window = Window(
     Const("Введите новое название группы:"),
     TextInput(id="edit_title_input", on_success=on_title_edited),  # type: ignore
     SwitchTo(
-        Const("⬅️ Назад"), id="back", state=campaign_states.EditCampaignInfo.select_field
+        Const("⬅️ Назад"),
+        id="back_from_title",
+        state=campaign_states.EditCampaignInfo.select_field,
     ),
     state=campaign_states.EditCampaignInfo.edit_title,
 )
@@ -123,7 +126,9 @@ edit_description_window = Window(
         id="edit_description_input", on_success=on_description_edited  # type: ignore
     ),
     SwitchTo(
-        Const("⬅️ Назад"), id="back", state=campaign_states.EditCampaignInfo.select_field
+        Const("⬅️ Назад"),
+        id="back_from_description",
+        state=campaign_states.EditCampaignInfo.select_field,
     ),
     state=campaign_states.EditCampaignInfo.edit_description,
 )
@@ -140,7 +145,9 @@ edit_icon_window = Window(
         width=2,
     ),
     SwitchTo(
-        Const("⬅️ Назад"), id="back", state=campaign_states.EditCampaignInfo.select_field
+        Const("⬅️ Назад"),
+        id="back_from_icon",
+        state=campaign_states.EditCampaignInfo.select_field,
     ),
     state=campaign_states.EditCampaignInfo.edit_icon,
 )
@@ -155,7 +162,10 @@ confirm_edit_window = Window(
     ),
     Button(Const("✅ Сохранить"), id="save_changes", on_click=on_edit_confirm),
     SwitchTo(
-        Const("⬅️ Назад"), id="back", state=campaign_states.EditCampaignInfo.select_field
+        Const("⬅️ Назад"),
+        id="back_from_confirm",
+        state=campaign_states.EditCampaignInfo.select_field,
+        show_mode=mode,
     ),
     Cancel(Const("❌ Отмена")),
     state=campaign_states.EditCampaignInfo.confirm,
