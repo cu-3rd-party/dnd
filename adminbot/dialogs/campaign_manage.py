@@ -1,0 +1,85 @@
+from aiogram import Router
+from aiogram_dialog import Dialog, Window, DialogManager
+from aiogram_dialog.widgets.kbd import Button, Group, Cancel
+from aiogram_dialog.widgets.text import Const, Format
+from aiogram.types import CallbackQuery
+
+from . import states as campaign_states
+
+
+# === Гетеры ===
+async def get_campaign_manage_data(dialog_manager: DialogManager, **kwargs):
+    campaign = dialog_manager.dialog_data.get("selected_campaign", {})
+    return {
+        "campaign_title": campaign.get("title", "Неизвестная группа"),
+        "campaign_description": campaign.get("description", "Описание отсутствует"),
+        "campaign_id": campaign.get("id", "N/A"),
+    }
+
+
+# === Кнопки ===
+async def on_edit_info(
+    callback: CallbackQuery, button: Button, dialog_manager: DialogManager
+):
+    await dialog_manager.start(campaign_states.EditCampaignInfo.select_field)
+
+
+async def on_manage_characters(
+    callback: CallbackQuery, button: Button, dialog_manager: DialogManager
+):
+    await dialog_manager.start(campaign_states.ManageCharacters.main)
+
+
+async def on_permissions(
+    callback: CallbackQuery, button: Button, dialog_manager: DialogManager
+):
+    await dialog_manager.start(campaign_states.EditPermissions.main)
+
+
+async def on_stats(
+    callback: CallbackQuery, button: Button, dialog_manager: DialogManager
+):
+    campaign = dialog_manager.dialog_data.get("selected_campaign", {})
+    stats_text = (
+        f"📊 Статистика группы: {campaign.get('title', 'Неизвестная')}\n\n"
+        f"👥 Количество студентов: 12\n"
+        f"📚 Активных заданий: 5\n"
+        f"⭐ Средний уровень: 4.2\n"
+        f"🏆 Лучший студент: Гарри Поттер\n\n"
+        f"📈 Прогресс группы: 78%"
+    )
+    await callback.answer(stats_text, show_alert=True)
+
+
+# === Окна ===
+campaign_manage_window = Window(
+    Format(
+        "🎓 Управление группой: {campaign_title}\n\n"
+        "Описание: {campaign_description}\n"
+        "ID группы: {campaign_id}\n\n"
+        "Выберите действие:"
+    ),
+    Group(
+        Button(
+            Const("✏️ Редактировать информацию"), id="edit_info", on_click=on_edit_info
+        ),
+        Button(
+            Const("👥 Управление персонажами"),
+            id="manage_characters",
+            on_click=on_manage_characters,
+        ),
+        Button(
+            Const("🔐 Настройки доступа"), id="permissions", on_click=on_permissions
+        ),
+        Button(Const("📊 Статистика группы"), id="stats", on_click=on_stats),
+        width=1,
+    ),
+    Cancel(Const("⬅️ Назад к списку")),
+    state=campaign_states.CampaignManage.main,
+    getter=get_campaign_manage_data,
+)
+
+# === Создание диалога и роутера ===
+dialog = Dialog(campaign_manage_window)
+router = Router()
+router.include_router(dialog)

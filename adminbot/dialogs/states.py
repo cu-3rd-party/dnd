@@ -3,14 +3,14 @@ from aiogram.fsm.state import State, StatesGroup
 
 class CampaignManagerMain(StatesGroup):
     main = State()
-    campaign_list = State()
 
 
 class CampaignManage(StatesGroup):
     main = State()
     edit_info = State()
-    manage_students = State()
+    manage_characters = State()
     permissions = State()
+    stats = State()
 
 
 class CreateCampaign(StatesGroup):
@@ -18,3 +18,25 @@ class CreateCampaign(StatesGroup):
     select_description = State()
     select_icon = State()
     confirm = State()
+
+
+class EditCampaignInfo(StatesGroup):
+    select_field = State()
+    edit_title = State()
+    edit_description = State()
+    edit_icon = State()
+    confirm = State()
+
+
+class ManageCharacters(StatesGroup):
+    main = State()
+    add_character = State()
+    remove_character = State()
+
+
+class PermissionsManager(StatesGroup):
+    main = State()
+    add_user = State()
+    remove_user = State()
+    edit_permission = State()
+    select_user = State()
