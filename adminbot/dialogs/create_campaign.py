@@ -13,27 +13,39 @@ from . import states as campaign_states
 async def get_create_campaign_data(dialog_manager: DialogManager, **kwargs):
     return {
         "title": dialog_manager.dialog_data.get("title", "Не задано"),
-        "description": dialog_manager.dialog_data.get("description", "Не задано"),
+        "description": dialog_manager.dialog_data.get(
+            "description", "Не задано"
+        ),
         "icon": dialog_manager.dialog_data.get("icon", "🏰"),
     }
 
 
 # === Кнопки ===
 async def on_campaign_title_entered(
-    message: Message, widget: TextInput, dialog_manager: DialogManager, text: str
+    message: Message,
+    widget: TextInput,
+    dialog_manager: DialogManager,
+    text: str,
 ):
     if len(text) > 255:
-        await message.answer("Название слишком длинное (максимум 255 символов)")
+        await message.answer(
+            "Название слишком длинное (максимум 255 символов)"
+        )
         return
     dialog_manager.dialog_data["title"] = text
     await dialog_manager.next()
 
 
 async def on_campaign_description_entered(
-    message: Message, widget: TextInput, dialog_manager: DialogManager, text: str
+    message: Message,
+    widget: TextInput,
+    dialog_manager: DialogManager,
+    text: str,
 ):
     if len(text) > 1023:
-        await message.answer("Описание слишком длинное (максимум 1023 символа)")
+        await message.answer(
+            "Описание слишком длинное (максимум 1023 символа)"
+        )
         return
     dialog_manager.dialog_data["description"] = text
     await dialog_manager.next()
@@ -85,7 +97,9 @@ async def on_campaign_confirm(
             f"Ошибка при создании: {result['error']}", show_alert=True
         )
     else:
-        await callback.answer("🎉 Учебная группа успешно создана!", show_alert=True)
+        await callback.answer(
+            "🎉 Учебная группа успешно создана!", show_alert=True
+        )
         await dialog_manager.done()
 
 
@@ -97,7 +111,8 @@ title_window = Window(
         "(максимум 255 символов)"
     ),
     TextInput(
-        id="campaign_title_input", on_success=on_campaign_title_entered  # type: ignore
+        id="campaign_title_input",
+        on_success=on_campaign_title_entered,  # type: ignore
     ),
     Cancel(Const("❌ Отмена")),
     state=campaign_states.CreateCampaign.select_title,
@@ -149,7 +164,9 @@ confirm_window = Window(
         Const("Всё верно?"),
     ),
     Button(
-        Const("✅ Создать группу"), id="confirm_create", on_click=on_campaign_confirm
+        Const("✅ Создать группу"),
+        id="confirm_create",
+        on_click=on_campaign_confirm,
     ),
     Back(Const("⬅️ Назад")),
     Button(Const("❌ Отмена"), id="cancel_create", on_click=on_create_cancel),

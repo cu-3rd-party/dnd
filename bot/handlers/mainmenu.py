@@ -32,14 +32,20 @@ async def get_user_campaigns(telegram_id: int) -> Optional[List[dict]]:
                 return []
 
     except HTTPStatusError as e:
-        logger.error(f"HTTP error fetching campaigns for user {telegram_id}: {e}")
+        logger.error(
+            f"HTTP error fetching campaigns for user {telegram_id}: {e}"
+        )
         return None
     except Exception as e:
-        logger.error(f"Unexpected error fetching campaigns for user {telegram_id}: {e}")
+        logger.error(
+            f"Unexpected error fetching campaigns for user {telegram_id}: {e}"
+        )
         return None
 
 
-async def campaigns_list_getter(dialog_manager: DialogManager, **kwargs) -> dict:
+async def campaigns_list_getter(
+    dialog_manager: DialogManager, **kwargs
+) -> dict:
     user: User = dialog_manager.middleware_data["event_from_user"]
     telegram_id = user.id
 
@@ -77,7 +83,9 @@ async def on_campaign_click(
     await callback.answer(f"Campaign {campaign_id} selected!")
 
 
-async def campaigns_detailed_getter(dialog_manager: DialogManager, **kwargs) -> dict:
+async def campaigns_detailed_getter(
+    dialog_manager: DialogManager, **kwargs
+) -> dict:
     user: User = dialog_manager.middleware_data["event_from_user"]
     telegram_id = user.id
 

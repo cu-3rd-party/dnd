@@ -17,7 +17,9 @@ async def get_campaign_manage_data(dialog_manager: DialogManager, **kwargs):
     # logger.debug(f"Managing campaign data: {campaign}")
     return {
         "campaign_title": campaign.get("title", "Неизвестная группа"),
-        "campaign_description": campaign.get("description", "Описание отсутствует"),
+        "campaign_description": campaign.get(
+            "description", "Описание отсутствует"
+        ),
         "campaign_id": campaign.get("id", "N/A"),
     }
 
@@ -29,7 +31,9 @@ async def on_edit_info(
     await dialog_manager.start(
         campaign_states.EditCampaignInfo.select_field,
         data={
-            "selected_campaign": dialog_manager.dialog_data.get("selected_campaign", {})
+            "selected_campaign": dialog_manager.dialog_data.get(
+                "selected_campaign", {}
+            )
         },
     )
 
@@ -38,7 +42,9 @@ async def on_manage_characters(
     callback: CallbackQuery, button: Button, dialog_manager: DialogManager
 ):
     selected_campaign = dialog_manager.dialog_data.get("selected_campaign", {})
-    logger.info(f"Selected campaign for managing characters: {selected_campaign}")
+    logger.info(
+        f"Selected campaign for managing characters: {selected_campaign}"
+    )
     await dialog_manager.start(
         campaign_states.ManageCharacters.main,
         data={"selected_campaign": selected_campaign},
@@ -50,7 +56,11 @@ async def on_permissions(
 ):
     await dialog_manager.start(
         campaign_states.EditPermissions.main,
-        data={"selected_campaign": dialog_manager.dialog_data.get("selected_campaign")},
+        data={
+            "selected_campaign": dialog_manager.dialog_data.get(
+                "selected_campaign"
+            )
+        },
     )
 
 
@@ -79,7 +89,9 @@ campaign_manage_window = Window(
     ),
     Group(
         Button(
-            Const("✏️ Редактировать информацию"), id="edit_info", on_click=on_edit_info
+            Const("✏️ Редактировать информацию"),
+            id="edit_info",
+            on_click=on_edit_info,
         ),
         Button(
             Const("👥 Управление персонажами"),
@@ -87,7 +99,9 @@ campaign_manage_window = Window(
             on_click=on_manage_characters,
         ),
         Button(
-            Const("🧙‍♂️ Управление мастерами"), id="permissions", on_click=on_permissions
+            Const("🧙‍♂️ Управление мастерами"),
+            id="permissions",
+            on_click=on_permissions,
         ),
         # Button(Const("📊 Статистика группы"), id="stats", on_click=on_stats),
         width=1,

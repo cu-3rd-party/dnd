@@ -33,7 +33,9 @@ async def get_campaigns_data(dialog_manager: DialogManager, **kwargs):
     end_idx = start_idx + campaigns_per_page
     current_campaigns = campaigns[start_idx:end_idx]
 
-    total_pages = (len(campaigns) + campaigns_per_page - 1) // campaigns_per_page
+    total_pages = (
+        len(campaigns) + campaigns_per_page - 1
+    ) // campaigns_per_page
 
     return {
         "campaigns": current_campaigns,
@@ -107,7 +109,9 @@ campaign_list_window = Window(
     ),
     Const(
         "У вас пока нет учебных групп",
-        when=lambda data, widget, manager: not data.get("has_campaigns", False),
+        when=lambda data, widget, manager: not data.get(
+            "has_campaigns", False
+        ),
     ),
     Group(
         Row(

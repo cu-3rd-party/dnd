@@ -115,9 +115,15 @@ class MockDnDApiClient:
 
         return new_character
 
-    async def get_campaign_characters(self, campaign_id: int) -> List[Dict[str, Any]]:
+    async def get_campaign_characters(
+        self, campaign_id: int
+    ) -> List[Dict[str, Any]]:
         await self._simulate_delay()
-        return [char for char in self.characters if char["campaign_id"] == campaign_id]
+        return [
+            char
+            for char in self.characters
+            if char["campaign_id"] == campaign_id
+        ]
 
     async def update_character(
         self, char_id: int, update_data: Dict[str, Any]
@@ -149,7 +155,9 @@ class MockDnDApiClient:
         await self._simulate_delay()
 
         if campaign_id:
-            return [camp for camp in self.campaigns if camp["id"] == campaign_id]
+            return [
+                camp for camp in self.campaigns if camp["id"] == campaign_id
+            ]
 
         # В моках возвращаем все кампании для любого пользователя
         return self.campaigns
@@ -193,7 +201,9 @@ class MockDnDApiClient:
         # В моках считаем, что все могут добавлять
 
         # В реальной реализации здесь была бы логика добавления пользователя в кампанию
-        return {"message": f"Пользователь {user_id} добавлен в кампанию {campaign_id}"}
+        return {
+            "message": f"Пользователь {user_id} добавлен в кампанию {campaign_id}"
+        }
 
     async def edit_permissions(
         self, campaign_id: int, owner_id: int, user_id: int, status: int
@@ -234,7 +244,6 @@ class RealDnDApiClient:
                 async with session.request(
                     method, f"{self.base_url}{endpoint}", **kwargs
                 ) as response:
-
                     if response.status in [200, 201]:
                         return await response.json()
                     elif response.status == 400:
@@ -246,7 +255,9 @@ class RealDnDApiClient:
                         return {"error": "Объект не найден"}
                     else:
                         error_text = await response.text()
-                        logger.error(f"API error {response.status}: {error_text}")
+                        logger.error(
+                            f"API error {response.status}: {error_text}"
+                        )
                         return {"error": f"Ошибка API: {response.status}"}
 
         except aiohttp.ClientError as e:
@@ -270,10 +281,18 @@ class RealDnDApiClient:
     async def upload_character(
         self, owner_id: int, campaign_id: int, data: Dict[str, Any]
     ) -> Dict[str, Any]:
-        payload = {"owner_id": owner_id, "campaign_id": campaign_id, "data": data}
-        return await self._make_request("POST", "/api/character/post/", json=payload)
+        payload = {
+            "owner_id": owner_id,
+            "campaign_id": campaign_id,
+            "data": data,
+        }
+        return await self._make_request(
+            "POST", "/api/character/post/", json=payload
+        )
 
-    async def get_campaign_characters(self, campaign_id: int) -> List[Dict[str, Any]]:
+    async def get_campaign_characters(
+        self, campaign_id: int
+    ) -> List[Dict[str, Any]]:
         """Получить всех персонажей кампании"""
         # В текущем API нет прямого метода для этого, поэтому получаем по одному
         # В реальном приложении лучше добавить отдельный эндпоинт
@@ -291,7 +310,9 @@ class RealDnDApiClient:
     ) -> Dict[str, Any]:
         """Обновить персонажа"""
         # В текущем API нет метода обновления персонажа
-        logger.warning("update_character: Этот метод требует реализации на бэкенде")
+        logger.warning(
+            "update_character: Этот метод требует реализации на бэкенде"
+        )
         return {"error": "Метод обновления персонажа не реализован на сервере"}
 
     # === CAMPAIGN ENDPOINTS ===
@@ -304,7 +325,9 @@ class RealDnDApiClient:
         if campaign_id is not None:
             params["campaign_id"] = campaign_id
 
-        result = await self._make_request("GET", "/api/campaign/get/", params=params)
+        result = await self._make_request(
+            "GET", "/api/campaign/get/", params=params
+        )
 
         if "error" in result:
             return []
@@ -329,13 +352,21 @@ class RealDnDApiClient:
         if icon is not None:
             payload["icon"] = icon
 
-        return await self._make_request("POST", "/api/campaign/create/", json=payload)
+        return await self._make_request(
+            "POST", "/api/campaign/create/", json=payload
+        )
 
     async def add_to_campaign(
         self, campaign_id: int, owner_id: int, user_id: int
     ) -> Dict[str, Any]:
-        payload = {"campaign_id": campaign_id, "owner_id": owner_id, "user_id": user_id}
-        return await self._make_request("POST", "/api/campaign/add/", json=payload)
+        payload = {
+            "campaign_id": campaign_id,
+            "owner_id": owner_id,
+            "user_id": user_id,
+        }
+        return await self._make_request(
+            "POST", "/api/campaign/add/", json=payload
+        )
 
     async def edit_permissions(
         self, campaign_id: int, owner_id: int, user_id: int, status: int

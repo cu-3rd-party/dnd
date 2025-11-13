@@ -53,7 +53,9 @@ async def get_characters_data(dialog_manager: DialogManager, **kwargs):
             "level": char_data.get("level", 1),
             "class": char_data.get("class", "⚔️ Воин"),
             "race": char_data.get("race", "Неизвестно"),
-            "player": char_data.get("player", f"Игрок {char.get('owner_id', '?')}"),
+            "player": char_data.get(
+                "player", f"Игрок {char.get('owner_id', '?')}"
+            ),
             "status": status,
             "hp_current": char_data.get("hp_current", 10),
             "hp_max": char_data.get("hp_max", 10),
@@ -82,7 +84,9 @@ async def get_characters_data(dialog_manager: DialogManager, **kwargs):
 
 async def get_character_detail_data(dialog_manager: DialogManager, **kwargs):
     """Получение детальной информации о персонаже через API"""
-    selected_character_id = dialog_manager.dialog_data.get("selected_character_id")
+    selected_character_id = dialog_manager.dialog_data.get(
+        "selected_character_id"
+    )
 
     if not selected_character_id:
         return {
@@ -145,17 +149,21 @@ async def get_character_detail_data(dialog_manager: DialogManager, **kwargs):
     hp_current = character["hp_current"]
     hp_max = character["hp_max"]
     hp_percentage = (hp_current / hp_max) * 100 if hp_max > 0 else 0
-    hp_bar = "█" * int(hp_percentage / 10) + "░" * (10 - int(hp_percentage / 10))
+    hp_bar = "█" * int(hp_percentage / 10) + "░" * (
+        10 - int(hp_percentage / 10)
+    )
 
     return {
         "character": character,
-        "campaign_title": dialog_manager.dialog_data.get("selected_campaign", {}).get(
-            "title", "Группа"
-        ),
+        "campaign_title": dialog_manager.dialog_data.get(
+            "selected_campaign", {}
+        ).get("title", "Группа"),
         "hp_percentage": int(hp_percentage),
         "hp_bar": hp_bar,
         "next_level_xp": character["level"] * 1000 + 1000,
-        "xp_progress": (character["xp"] % 1000) / 10 if character["xp"] > 0 else 0,
+        "xp_progress": (character["xp"] % 1000) / 10
+        if character["xp"] > 0
+        else 0,
     }
 
 
@@ -163,18 +171,25 @@ async def get_character_detail_data(dialog_manager: DialogManager, **kwargs):
 
 
 async def on_character_selected(
-    callback: CallbackQuery, widget: Select, dialog_manager: DialogManager, item_id: str
+    callback: CallbackQuery,
+    widget: Select,
+    dialog_manager: DialogManager,
+    item_id: str,
 ):
     """Обработчик выбора персонажа"""
     dialog_manager.dialog_data["selected_character_id"] = item_id
-    await dialog_manager.switch_to(campaign_states.ManageCharacters.view_character)
+    await dialog_manager.switch_to(
+        campaign_states.ManageCharacters.view_character
+    )
 
 
 async def on_edit_character(
     callback: CallbackQuery, button: Button, dialog_manager: DialogManager
 ):
     """Обработчик редактирования персонажа"""
-    selected_character_id = dialog_manager.dialog_data.get("selected_character_id")
+    selected_character_id = dialog_manager.dialog_data.get(
+        "selected_character_id"
+    )
 
     if not selected_character_id:
         await callback.answer("❌ Сначала выберите персонажа", show_alert=True)
@@ -197,7 +212,9 @@ async def on_character_status_toggle(
     callback: CallbackQuery, button: Button, dialog_manager: DialogManager
 ):
     """Обработчик изменения статуса персонажа через API"""
-    selected_character_id = dialog_manager.dialog_data.get("selected_character_id")
+    selected_character_id = dialog_manager.dialog_data.get(
+        "selected_character_id"
+    )
 
     if not selected_character_id:
         await callback.answer("❌ Сначала выберите персонажа", show_alert=True)
@@ -214,11 +231,14 @@ async def on_character_status_toggle(
 
     # Обновляем статус через API
     update_data = {"status": new_status}
-    result = await api_client.update_character(int(selected_character_id), update_data)
+    result = await api_client.update_character(
+        int(selected_character_id), update_data
+    )
 
     if "error" in result:
         await callback.answer(
-            f"❌ Ошибка при изменении статуса: {result['error']}", show_alert=True
+            f"❌ Ошибка при изменении статуса: {result['error']}",
+            show_alert=True,
         )
     else:
         await callback.answer(
@@ -253,12 +273,15 @@ async def on_add_character(
     }
 
     result = await api_client.upload_character(
-        owner_id=callback.from_user.id, campaign_id=campaign_id, data=character_data
+        owner_id=callback.from_user.id,
+        campaign_id=campaign_id,
+        data=character_data,
     )
 
     if "error" in result:
         await callback.answer(
-            f"❌ Ошибка при создании персонажа: {result['error']}", show_alert=True
+            f"❌ Ошибка при создании персонажа: {result['error']}",
+            show_alert=True,
         )
     else:
         character_name = result.get("data", {}).get("name", "Новый студент")
@@ -272,7 +295,9 @@ async def on_character_stats(
     callback: CallbackQuery, button: Button, dialog_manager: DialogManager
 ):
     """Обработчик просмотра статистики персонажа"""
-    selected_character_id = dialog_manager.dialog_data.get("selected_character_id")
+    selected_character_id = dialog_manager.dialog_data.get(
+        "selected_character_id"
+    )
 
     if not selected_character_id:
         await callback.answer("❌ Сначала выберите персонажа", show_alert=True)
@@ -347,12 +372,16 @@ character_detail_window = Window(
         Format("❤️ Здоровье: {character[hp_current]}/{character[hp_max]}\n"),
         Format("   {hp_bar} {hp_percentage}%\n\n"),
         Format("⭐ Опыт: {character[xp]}\n"),
-        Format("📊 До след. уровня: {xp_progress:.1f}% ({next_level_xp} XP)\n\n"),
+        Format(
+            "📊 До след. уровня: {xp_progress:.1f}% ({next_level_xp} XP)\n\n"
+        ),
         Format("📅 Последняя активность: {character[last_activity]}"),
     ),
     Column(
         Button(
-            Const("✏️ Редактировать"), id="edit_character", on_click=on_edit_character
+            Const("✏️ Редактировать"),
+            id="edit_character",
+            on_click=on_edit_character,
         ),
         Button(
             Const("📊 Подробная статистика"),

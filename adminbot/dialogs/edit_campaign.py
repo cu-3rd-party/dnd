@@ -14,7 +14,9 @@ async def get_campaign_edit_data(dialog_manager: DialogManager, **kwargs):
     dialog_manager.dialog_data["selected_campaign"] = campaign
     return {
         "campaign_title": campaign.get("title", "Неизвестная группа"),
-        "campaign_description": campaign.get("description", "Описание отсутствует"),
+        "campaign_description": campaign.get(
+            "description", "Описание отсутствует"
+        ),
         "campaign_icon": campaign.get("icon", "🏰"),
         "campaign_id": campaign.get("id", "N/A"),
     }
@@ -34,10 +36,15 @@ async def on_field_selected(
 
 
 async def on_title_edited(
-    message: Message, widget: TextInput, dialog_manager: DialogManager, text: str
+    message: Message,
+    widget: TextInput,
+    dialog_manager: DialogManager,
+    text: str,
 ):
     if len(text) > 255:
-        await message.answer("Название слишком длинное (максимум 255 символов)")
+        await message.answer(
+            "Название слишком длинное (максимум 255 символов)"
+        )
         return
 
     if "selected_campaign" not in dialog_manager.dialog_data:
@@ -48,10 +55,15 @@ async def on_title_edited(
 
 
 async def on_description_edited(
-    message: Message, widget: TextInput, dialog_manager: DialogManager, text: str
+    message: Message,
+    widget: TextInput,
+    dialog_manager: DialogManager,
+    text: str,
 ):
     if len(text) > 1023:
-        await message.answer("Описание слишком длинное (максимум 1023 символа)")
+        await message.answer(
+            "Описание слишком длинное (максимум 1023 символа)"
+        )
         return
 
     if "selected_campaign" not in dialog_manager.dialog_data:
@@ -98,11 +110,17 @@ select_field_window = Window(
         "Выберите что хотите изменить:"
     ),
     Column(
-        Button(Const("📝 Название группы"), id="title", on_click=on_field_selected),
         Button(
-            Const("📄 Описание группы"), id="description", on_click=on_field_selected
+            Const("📝 Название группы"), id="title", on_click=on_field_selected
         ),
-        Button(Const("🎨 Иконка группы"), id="icon", on_click=on_field_selected),
+        Button(
+            Const("📄 Описание группы"),
+            id="description",
+            on_click=on_field_selected,
+        ),
+        Button(
+            Const("🎨 Иконка группы"), id="icon", on_click=on_field_selected
+        ),
     ),
     Cancel(Const("⬅️ Назад")),
     state=campaign_states.EditCampaignInfo.select_field,
@@ -123,7 +141,8 @@ edit_title_window = Window(
 edit_description_window = Window(
     Const("Введите новое описание группы:"),
     TextInput(
-        id="edit_description_input", on_success=on_description_edited  # type: ignore
+        id="edit_description_input",
+        on_success=on_description_edited,  # type: ignore
     ),
     SwitchTo(
         Const("⬅️ Назад"),
@@ -136,12 +155,26 @@ edit_description_window = Window(
 edit_icon_window = Window(
     Const("Выберите новую иконку для группы:"),
     Group(
-        Button(Const("🏰 Замок"), id="castle_edit", on_click=on_icon_selected_edit),
-        Button(Const("📚 Книги"), id="books_edit", on_click=on_icon_selected_edit),
-        Button(Const("⚡ Молния"), id="lightning_edit", on_click=on_icon_selected_edit),
-        Button(Const("🔥 Огонь"), id="fire_edit", on_click=on_icon_selected_edit),
-        Button(Const("🌙 Луна"), id="moon_edit", on_click=on_icon_selected_edit),
-        Button(Const("⭐ Звезда"), id="star_edit", on_click=on_icon_selected_edit),
+        Button(
+            Const("🏰 Замок"), id="castle_edit", on_click=on_icon_selected_edit
+        ),
+        Button(
+            Const("📚 Книги"), id="books_edit", on_click=on_icon_selected_edit
+        ),
+        Button(
+            Const("⚡ Молния"),
+            id="lightning_edit",
+            on_click=on_icon_selected_edit,
+        ),
+        Button(
+            Const("🔥 Огонь"), id="fire_edit", on_click=on_icon_selected_edit
+        ),
+        Button(
+            Const("🌙 Луна"), id="moon_edit", on_click=on_icon_selected_edit
+        ),
+        Button(
+            Const("⭐ Звезда"), id="star_edit", on_click=on_icon_selected_edit
+        ),
         width=2,
     ),
     SwitchTo(
