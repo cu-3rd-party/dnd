@@ -9,8 +9,14 @@ from typing import Optional, List, Union
 
 from settings import settings
 from .models import (
+    AddInventoryItemResponse,
+    DeleteInventoryItemResponse,
+    InventoryItem,
+    InventoryItemCreate,
+    InventoryItemUpdate,
     PingResponse,
     GetCharacterResponse,
+    UpdateInventoryItemResponse,
     UploadCharacterResponse,
     CreateCampaignResponse,
     GetCampaignsResponse,
@@ -112,6 +118,30 @@ class MockDnDApiClient:
                 },
             ),
         ]
+        self.inventory_items = [
+            InventoryItem(
+                id=1,
+                character_id=1,
+                name="Меч света",
+                description="Магический меч, светящийся в темноте",
+                quantity=1,
+            ),
+            InventoryItem(
+                id=2,
+                character_id=1,
+                name="Зелье здоровья",
+                description="Восстанавливает 50 HP",
+                quantity=3,
+            ),
+            InventoryItem(
+                id=3,
+                character_id=2,
+                name="Топор варвара",
+                description="Массивный двуручный топор",
+                quantity=1,
+            ),
+        ]
+        self.next_inventory_id = 4
         self.next_campaign_id = 3
         self.next_character_id = 3
         self.campaign_permissions = {}
@@ -179,6 +209,71 @@ class MockDnDApiClient:
                 return GetCharacterResponse.model_validate(character.model_dump())
 
         return ErrorResponse(error="Персонаж не найден")
+
+    # === INVENTORY ENDPOINTS ===
+    async def get_character_inventory(self, character_id: int) -> List[InventoryItem]:
+        """Получить инвентарь персонажа"""
+        await self._simulate_delay()
+        return [
+            item for item in self.inventory_items if item.character_id == character_id
+        ]
+
+    async def add_inventory_item(
+        self, character_id: int, item: InventoryItemCreate
+    ) -> Union[AddInventoryItemResponse, ErrorResponse]:
+        """Добавить предмет в инвентарь"""
+        await self._simulate_delay()
+
+        # Проверяем существование персонажа
+        character_exists = any(char.id == character_id for char in self.characters)
+        if not character_exists:
+            return ErrorResponse(error="Персонаж не найден")
+
+        new_item = InventoryItem(
+            id=self.next_inventory_id,
+            character_id=character_id,
+            name=item.name,
+            description=item.description,
+            quantity=item.quantity,
+        )
+
+        self.inventory_items.append(new_item)
+        self.next_inventory_id += 1
+
+        return AddInventoryItemResponse(**new_item.model_dump())
+
+    async def update_inventory_item(
+        self, item_id: int, update_data: InventoryItemUpdate
+    ) -> Union[UpdateInventoryItemResponse, ErrorResponse]:
+        """Обновить предмет в инвентаре"""
+        await self._simulate_delay()
+
+        for item in self.inventory_items:
+            if item.id == item_id:
+                # Обновляем поля
+                if update_data.name is not None:
+                    item.name = update_data.name
+                if update_data.description is not None:
+                    item.description = update_data.description
+                if update_data.quantity is not None:
+                    item.quantity = update_data.quantity
+
+                return UpdateInventoryItemResponse(**item.model_dump())
+
+        return ErrorResponse(error="Предмет не найден")
+
+    async def delete_inventory_item(
+        self, item_id: int
+    ) -> Union[DeleteInventoryItemResponse, ErrorResponse]:
+        """Удалить предмет из инвентаря"""
+        await self._simulate_delay()
+
+        for i, item in enumerate(self.inventory_items):
+            if item.id == item_id:
+                self.inventory_items.pop(i)
+                return DeleteInventoryItemResponse(message="Предмет удален")
+
+        return ErrorResponse(error="Предмет не найден")
 
     # === CAMPAIGN ENDPOINTS ===
     async def get_campaigns(
@@ -323,6 +418,37 @@ class RealDnDApiClient:
         """Обновить персонажа"""
         logger.warning("update_character: Этот метод требует реализации на бэкенде")
         raise ApiError("Метод обновления персонажа не реализован на сервере")
+
+    # === INVENTORY ENDPOINTS ===
+    async def get_character_inventory(self, character_id: int) -> List[InventoryItem]:
+        """Получить инвентарь персонажа"""
+        logger.warning(
+            "get_character_inventory: Этот метод требует реализации на бэкенде"
+        )
+        return []
+
+    async def add_inventory_item(
+        self, character_id: int, item: InventoryItemCreate
+    ) -> AddInventoryItemResponse:
+        """Добавить предмет в инвентарь"""
+        logger.warning("add_inventory_item: Этот метод требует реализации на бэкенде")
+        raise ApiError("Метод добавления предмета в инвентарь не реализован на сервере")
+
+    async def update_inventory_item(
+        self, item_id: int, update_data: InventoryItemUpdate
+    ) -> UpdateInventoryItemResponse:
+        """Обновить предмет в инвентаре"""
+        logger.warning(
+            "update_inventory_item: Этот метод требует реализации на бэкенде"
+        )
+        raise ApiError("Метод обновления предмета в инвентаре не реализован на сервере")
+
+    async def delete_inventory_item(self, item_id: int) -> DeleteInventoryItemResponse:
+        """Удалить предмет из инвентаря"""
+        logger.warning(
+            "delete_inventory_item: Этот метод требует реализации на бэкенде"
+        )
+        raise ApiError("Метод удаления предмета из инвентаря не реализован на сервере")
 
     # === CAMPAIGN ENDPOINTS ===
     async def get_campaigns(

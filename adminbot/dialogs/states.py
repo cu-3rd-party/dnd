@@ -10,7 +10,6 @@ class CampaignManage(StatesGroup):
     edit_info = State()
     manage_characters = State()
     permissions = State()
-    # stats = State()
 
 
 class CreateCampaign(StatesGroup):
@@ -44,3 +43,10 @@ class ManageCharacters(StatesGroup):
 
 class ManageInventory(StatesGroup):
     view_inventory = State()
+    add_inventory_item = State()
+    add_inventory_item_description = State()
+    add_inventory_item_quantity = State()
+    edit_inventory_item = State()
+    edit_inventory_item_name = State()
+    edit_inventory_item_description = State()
+    edit_inventory_item_quantity = State()

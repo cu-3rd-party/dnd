@@ -57,7 +57,10 @@ async def on_change_rating(
 async def on_view_inventory(
     callback: CallbackQuery, button: Button, manager: DialogManager
 ):
-    await manager.switch_to(campaign_states.ManageInventory.view_inventory)
+    await manager.start(
+        campaign_states.ManageInventory.view_inventory,
+        data={"character_id": manager.dialog_data.get("character_id", 0)},
+    )
 
 
 async def on_download_jpeg(

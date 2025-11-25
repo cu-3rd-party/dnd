@@ -86,7 +86,6 @@ class CreateCampaignResponse(Message):
     pass
 
 
-# Исправляем корневую модель для Pydantic v2
 class GetCampaignsResponse(RootModel):
     root: Union[CampaignModelSchema, List[CampaignModelSchema]]
 
@@ -102,3 +101,41 @@ class EditPermissionsResponse(Message):
 # Error response type
 class ErrorResponse(BaseModel):
     error: Union[ValidationError, NotFoundError, ForbiddenError, str]
+
+
+class InventoryItemBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+    quantity: int = 1
+
+
+class InventoryItemCreate(InventoryItemBase):
+    pass
+
+
+class InventoryItemUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    quantity: Optional[int] = None
+
+
+class InventoryItem(InventoryItemBase):
+    id: int
+    character_id: int
+
+
+# Response types for inventory
+class GetInventoryResponse(RootModel):
+    root: List[InventoryItem]
+
+
+class AddInventoryItemResponse(InventoryItem):
+    pass
+
+
+class UpdateInventoryItemResponse(InventoryItem):
+    pass
+
+
+class DeleteInventoryItemResponse(Message):
+    pass
