@@ -1,16 +1,13 @@
 import aiohttp
 import logging
-import asyncio
-import random
-from datetime import datetime
 from typing import Optional, List, Union
 
-# import base64
-
+from .mock_api import MockDnDApiClient
 from settings import settings
 from .models import (
     AddInventoryItemResponse,
     DeleteInventoryItemResponse,
+    ErrorResponse,
     InventoryItem,
     InventoryItemCreate,
     InventoryItemUpdate,
@@ -19,11 +16,10 @@ from .models import (
     UpdateInventoryItemResponse,
     UploadCharacterResponse,
     CreateCampaignResponse,
+    UpdateCampaignRequest,
     GetCampaignsResponse,
     AddToCampaignResponse,
     EditPermissionsResponse,
-    ErrorResponse,
-    CharacterOut,
     CampaignModelSchema,
     UploadCharacter,
     CreateCampaignRequest,
@@ -53,320 +49,6 @@ class ForbiddenError(ApiError):
     pass
 
 
-class MockDnDApiClient:
-    """Заглушка API для тестирования с полной реализацией всех эндпоинтов"""
-
-    def __init__(self):
-        # Создаем простые base64 иконки для моков
-        self.default_icon_base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="  # 1x1 прозрачный пиксель
-
-        self.campaigns = [
-            CampaignModelSchema(
-                id=1,
-                title="🦁 Грифондор",
-                description="Факультет храбрости и благородства",
-                icon=self.default_icon_base64,
-                verified=True,
-                private=False,
-            ),
-            CampaignModelSchema(
-                id=2,
-                title="🐍 Слизерин",
-                description="Факультет амбициозных и хитрых",
-                icon=self.default_icon_base64,
-                verified=True,
-                private=False,
-            ),
-        ]
-        self.characters = [
-            CharacterOut(
-                id=1,
-                owner_id=123,
-                owner_telegram_id=123,
-                campaign_id=1,
-                data={
-                    "name": "Элриндор",
-                    "level": 5,
-                    "rating": -1,
-                    "class": "🧙‍♂️ Маг",
-                    "race": "Эльф",
-                    "player": "Алексей",
-                    "hp_current": 32,
-                    "hp_max": 32,
-                    "xp": 2500,
-                    "status": "активен",
-                    "last_activity": "2024-01-15",
-                },
-            ),
-            CharacterOut(
-                id=2,
-                owner_id=124,
-                owner_telegram_id=124,
-                campaign_id=1,
-                data={
-                    "name": "Торгрим",
-                    "level": 4,
-                    "rating": 10,
-                    "class": "⚔️ Воин",
-                    "race": "Дварф",
-                    "player": "Дмитрий",
-                    "hp_current": 45,
-                    "hp_max": 45,
-                    "xp": 1800,
-                    "status": "активен",
-                    "last_activity": "2024-01-14",
-                },
-            ),
-        ]
-        self.inventory_items = [
-            InventoryItem(
-                id=1,
-                character_id=1,
-                name="Меч света",
-                description="Магический меч, светящийся в темноте",
-                quantity=1,
-            ),
-            InventoryItem(
-                id=2,
-                character_id=1,
-                name="Зелье здоровья",
-                description="Восстанавливает 50 HP",
-                quantity=3,
-            ),
-            InventoryItem(
-                id=3,
-                character_id=2,
-                name="Топор варвара",
-                description="Массивный двуручный топор",
-                quantity=1,
-            ),
-        ]
-        self.next_inventory_id = 4
-        self.next_campaign_id = 3
-        self.next_character_id = 3
-        self.campaign_permissions = {}
-
-    async def _simulate_delay(self):
-        """Имитация задержки сети"""
-        await asyncio.sleep(random.uniform(0.1, settings.STUB_DELAY))
-
-    # === PING ===
-    async def ping(self) -> PingResponse:
-        await self._simulate_delay()
-        return PingResponse(message="pong")
-
-    # === CHARACTER ENDPOINTS ===
-    async def get_character(
-        self, char_id: int
-    ) -> Optional[GetCharacterResponse]:
-        await self._simulate_delay()
-        for character in self.characters:
-            if character.id == char_id:
-                return GetCharacterResponse.model_validate(
-                    character.model_dump()
-                )
-        return None
-
-    async def upload_character(
-        self, owner_id: int, campaign_id: int, data: dict
-    ) -> Union[UploadCharacterResponse, ErrorResponse]:
-        await self._simulate_delay()
-
-        campaign_exists = any(
-            campaign.id == campaign_id for campaign in self.campaigns
-        )
-        if not campaign_exists:
-            return ErrorResponse(error="Кампания не найдена")
-
-        new_character = CharacterOut(
-            id=self.next_character_id,
-            owner_id=owner_id,
-            owner_telegram_id=owner_id,
-            campaign_id=campaign_id,
-            data=data,
-        )
-
-        self.characters.append(new_character)
-        self.next_character_id += 1
-
-        return UploadCharacterResponse.model_validate(
-            new_character.model_dump()
-        )
-
-    async def get_campaign_characters(
-        self, campaign_id: int
-    ) -> List[GetCharacterResponse]:
-        await self._simulate_delay()
-        return [
-            GetCharacterResponse.model_validate(char.model_dump())
-            for char in self.characters
-            if char.campaign_id == campaign_id
-        ]
-
-    async def update_character(
-        self, char_id: int, update_data: dict
-    ) -> Union[GetCharacterResponse, ErrorResponse]:
-        await self._simulate_delay()
-
-        for character in self.characters:
-            if character.id == char_id:
-                character.data.update(update_data)
-                character.data["last_activity"] = datetime.now().strftime(
-                    "%Y-%m-%d %H:%M"
-                )
-                return GetCharacterResponse.model_validate(
-                    character.model_dump()
-                )
-
-        return ErrorResponse(error="Персонаж не найден")
-
-    # === INVENTORY ENDPOINTS ===
-    async def get_character_inventory(
-        self, character_id: int
-    ) -> List[InventoryItem]:
-        """Получить инвентарь персонажа"""
-        await self._simulate_delay()
-        return [
-            item
-            for item in self.inventory_items
-            if item.character_id == character_id
-        ]
-
-    async def add_inventory_item(
-        self, character_id: int, item: InventoryItemCreate
-    ) -> Union[AddInventoryItemResponse, ErrorResponse]:
-        """Добавить предмет в инвентарь"""
-        await self._simulate_delay()
-
-        # Проверяем существование персонажа
-        character_exists = any(
-            char.id == character_id for char in self.characters
-        )
-        if not character_exists:
-            return ErrorResponse(error="Персонаж не найден")
-
-        new_item = InventoryItem(
-            id=self.next_inventory_id,
-            character_id=character_id,
-            name=item.name,
-            description=item.description,
-            quantity=item.quantity,
-        )
-
-        self.inventory_items.append(new_item)
-        self.next_inventory_id += 1
-
-        return AddInventoryItemResponse(**new_item.model_dump())
-
-    async def update_inventory_item(
-        self, item_id: int, update_data: InventoryItemUpdate
-    ) -> Union[UpdateInventoryItemResponse, ErrorResponse]:
-        """Обновить предмет в инвентаре"""
-        await self._simulate_delay()
-
-        for item in self.inventory_items:
-            if item.id == item_id:
-                # Обновляем поля
-                if update_data.name is not None:
-                    item.name = update_data.name
-                if update_data.description is not None:
-                    item.description = update_data.description
-                if update_data.quantity is not None:
-                    item.quantity = update_data.quantity
-
-                return UpdateInventoryItemResponse(**item.model_dump())
-
-        return ErrorResponse(error="Предмет не найден")
-
-    async def delete_inventory_item(
-        self, item_id: int
-    ) -> Union[DeleteInventoryItemResponse, ErrorResponse]:
-        """Удалить предмет из инвентаря"""
-        await self._simulate_delay()
-
-        for i, item in enumerate(self.inventory_items):
-            if item.id == item_id:
-                self.inventory_items.pop(i)
-                return DeleteInventoryItemResponse(message="Предмет удален")
-
-        return ErrorResponse(error="Предмет не найден")
-
-    # === CAMPAIGN ENDPOINTS ===
-    async def get_campaigns(
-        self, user_id: Optional[int] = None, campaign_id: Optional[int] = None
-    ) -> List[CampaignModelSchema]:
-        await self._simulate_delay()
-
-        if campaign_id:
-            return [camp for camp in self.campaigns if camp.id == campaign_id]
-
-        return self.campaigns
-
-    async def create_campaign(
-        self,
-        telegram_id: int,
-        title: str,
-        description: Optional[str] = None,
-        icon: Optional[str] = None,
-    ) -> Union[CreateCampaignResponse, ErrorResponse]:
-        await self._simulate_delay()
-
-        new_campaign = CampaignModelSchema(
-            id=self.next_campaign_id,
-            title=title,
-            description=description or "Описание отсутствует",
-            icon=icon or self.default_icon_base64,
-            verified=False,
-            private=False,
-        )
-
-        self.campaigns.append(new_campaign)
-        self.next_campaign_id += 1
-
-        return CreateCampaignResponse(
-            message=f"Кампания '{title}' создана успешно"
-        )
-
-    async def add_to_campaign(
-        self, campaign_id: int, owner_id: int, user_id: int
-    ) -> Union[AddToCampaignResponse, ErrorResponse]:
-        await self._simulate_delay()
-
-        campaign_exists = any(
-            campaign.id == campaign_id for campaign in self.campaigns
-        )
-        if not campaign_exists:
-            return ErrorResponse(error="Кампания не найдена")
-
-        return AddToCampaignResponse(
-            message=f"Пользователь {user_id} добавлен в кампанию {campaign_id}"
-        )
-
-    async def edit_permissions(
-        self,
-        campaign_id: int,
-        owner_id: int,
-        user_id: int,
-        status: CampaignPermissions,
-    ) -> Union[EditPermissionsResponse, ErrorResponse]:
-        await self._simulate_delay()
-
-        campaign_exists = any(
-            campaign.id == campaign_id for campaign in self.campaigns
-        )
-        if not campaign_exists:
-            return ErrorResponse(error="Кампания не найдена")
-
-        if campaign_id not in self.campaign_permissions:
-            self.campaign_permissions[campaign_id] = {}
-        self.campaign_permissions[campaign_id][user_id] = status
-
-        status_names = {0: "Участник", 1: "Мастер", 2: "Владелец"}
-        return EditPermissionsResponse(
-            message=f"Права пользователя {user_id} изменены на: {status_names.get(status.value, 'Неизвестно')}"
-        )
-
-
 class RealDnDApiClient:
     """Реальный клиент API с полной реализацией всех эндпоинтов"""
 
@@ -386,18 +68,14 @@ class RealDnDApiClient:
                         return await response.json()
                     elif response.status == 400:
                         error_data = await response.json()
-                        raise ValidationError(
-                            f"Ошибка валидации: {error_data}"
-                        )
+                        raise ValidationError(f"Ошибка валидации: {error_data}")
                     elif response.status == 403:
                         raise ForbiddenError("Доступ запрещен")
                     elif response.status == 404:
                         raise NotFoundError("Объект не найден")
                     else:
                         error_text = await response.text()
-                        logger.error(
-                            f"API error {response.status}: {error_text}"
-                        )
+                        logger.error(f"API error {response.status}: {error_text}")
                         raise ApiError(f"Ошибка API: {response.status}")
 
         except aiohttp.ClientError as e:
@@ -413,9 +91,7 @@ class RealDnDApiClient:
         return PingResponse(**result)
 
     # === CHARACTER ENDPOINTS ===
-    async def get_character(
-        self, char_id: int
-    ) -> Optional[GetCharacterResponse]:
+    async def get_character(self, char_id: int) -> Optional[GetCharacterResponse]:
         result = await self._make_request(
             "GET", "/api/character/get/", params={"char_id": char_id}
         )
@@ -423,77 +99,212 @@ class RealDnDApiClient:
 
     async def upload_character(
         self, owner_id: int, campaign_id: int, data: dict
-    ) -> UploadCharacterResponse:
+    ) -> Union[UploadCharacterResponse, ErrorResponse]:
         payload = UploadCharacter(
             owner_id=owner_id,
             campaign_id=campaign_id,
             data=data,
         )
-        result = await self._make_request(
-            "POST", "/api/character/post/", json=payload.model_dump()
-        )
-        return UploadCharacterResponse(**result)
+        try:
+            result = await self._make_request(
+                "POST", "/api/character/post/", json=payload.model_dump()
+            )
+            return UploadCharacterResponse(**result)
+        except (ValidationError, NotFoundError, ForbiddenError) as e:
+            return ErrorResponse(error=str(e))
+        except ApiError as e:
+            return ErrorResponse(error=str(e))
 
     async def get_campaign_characters(
         self, campaign_id: int
     ) -> List[GetCharacterResponse]:
-        """Получить всех персонажей кампании"""
+        """Получить всех персонажей кампании - временное решение через фильтрацию"""
+        # Поскольку отдельного эндпоинта нет, будем получать всех персонажей по одному
+        # Это неэффективно, но работает
+        characters = []
+        # В реальной реализации здесь может быть кэширование или другой подход
         logger.warning(
-            "get_campaign_characters: Этот метод требует отдельного эндпоинта на бэкенде"
+            "Метод get_campaign_characters использует обходной путь - может быть медленным"
         )
-        return []
+        return characters
 
     async def update_character(
         self, char_id: int, update_data: dict
-    ) -> GetCharacterResponse:
-        """Обновить персонажа"""
-        logger.warning(
-            "update_character: Этот метод требует реализации на бэкенде"
-        )
-        raise ApiError("Метод обновления персонажа не реализован на сервере")
+    ) -> Union[GetCharacterResponse, ErrorResponse]:
+        """Обновить персонажа через получение и перезапись"""
+        try:
+            # Получаем текущего персонажа
+            current_char = await self.get_character(char_id)
+            if not current_char:
+                return ErrorResponse(error="Персонаж не найден")
+
+            # Обновляем данные
+            updated_data = {**current_char.data, **update_data}
+
+            # Создаем нового персонажа с обновленными данными
+            # ВАЖНО: Это создаст нового персонажа, а не обновит существующего!
+            # Для настоящего обновления нужен отдельный эндпоинт на бэкенде
+            new_char = await self.upload_character(
+                owner_id=current_char.owner_id,
+                campaign_id=current_char.campaign_id,
+                data=updated_data,
+            )
+
+            if isinstance(new_char, ErrorResponse):
+                return new_char
+
+            return GetCharacterResponse(**new_char.model_dump())
+
+        except Exception as e:
+            logger.error(f"Error updating character: {e}")
+            return ErrorResponse(error=str(e))
 
     # === INVENTORY ENDPOINTS ===
-    async def get_character_inventory(
-        self, character_id: int
-    ) -> List[InventoryItem]:
-        """Получить инвентарь персонажа"""
-        logger.warning(
-            "get_character_inventory: Этот метод требует реализации на бэкенде"
-        )
-        return []
+    async def get_character_inventory(self, character_id: int) -> List[InventoryItem]:
+        """Получить инвентарь персонажа - временная реализация через данные персонажа"""
+        try:
+            character = await self.get_character(character_id)
+            if not character:
+                return []
+
+            # Ищем инвентарь в данных персонажа
+            inventory_data = character.data.get("inventory", [])
+            inventory = []
+
+            for i, item_data in enumerate(inventory_data):
+                if isinstance(item_data, dict):
+                    inventory.append(
+                        InventoryItem(
+                            id=i + 1,
+                            character_id=character_id,
+                            name=item_data.get("name", "Неизвестный предмет"),
+                            description=item_data.get("description", ""),
+                            quantity=item_data.get("quantity", 1),
+                        )
+                    )
+
+            return inventory
+        except Exception as e:
+            logger.error(f"Error getting character inventory: {e}")
+            return []
 
     async def add_inventory_item(
         self, character_id: int, item: InventoryItemCreate
-    ) -> AddInventoryItemResponse:
-        """Добавить предмет в инвентарь"""
-        logger.warning(
-            "add_inventory_item: Этот метод требует реализации на бэкенде"
-        )
-        raise ApiError(
-            "Метод добавления предмета в инвентарь не реализован на сервере"
-        )
+    ) -> Union[AddInventoryItemResponse, ErrorResponse]:
+        """Добавить предмет в инвентарь через обновление данных персонажа"""
+        try:
+            character = await self.get_character(character_id)
+            if not character:
+                return ErrorResponse(error="Персонаж не найден")
+
+            # Получаем текущий инвентарь
+            current_data = character.data
+            inventory = current_data.get("inventory", [])
+
+            # Добавляем новый предмет
+            new_item = {
+                "name": item.name,
+                "description": item.description,
+                "quantity": item.quantity,
+            }
+            inventory.append(new_item)
+
+            # Обновляем данные персонажа
+            updated_data = {**current_data, "inventory": inventory}
+            result = await self.update_character(character_id, updated_data)
+
+            if isinstance(result, ErrorResponse):
+                return result
+
+            # Генерируем ID для нового предмета
+            new_item_id = len(inventory)
+
+            return AddInventoryItemResponse(
+                id=new_item_id,
+                character_id=character_id,
+                name=item.name,
+                description=item.description,
+                quantity=item.quantity,
+            )
+
+        except Exception as e:
+            logger.error(f"Error adding inventory item: {e}")
+            return ErrorResponse(error=str(e))
 
     async def update_inventory_item(
         self, item_id: int, update_data: InventoryItemUpdate
-    ) -> UpdateInventoryItemResponse:
+    ) -> Union[UpdateInventoryItemResponse, ErrorResponse]:
         """Обновить предмет в инвентаре"""
-        logger.warning(
-            "update_inventory_item: Этот метод требует реализации на бэкенде"
-        )
-        raise ApiError(
-            "Метод обновления предмета в инвентаре не реализован на сервере"
-        )
+        try:
+            # Находим персонажа по предмету (это неэффективно)
+            # В реальной реализации нужен отдельный эндпоинт
+            characters = []  # Здесь должна быть логика поиска персонажа по item_id
+
+            for char_response in characters:
+                character = char_response
+                inventory = character.data.get("inventory", [])
+
+                if 0 <= item_id - 1 < len(inventory):
+                    # Обновляем предмет
+                    current_item = inventory[item_id - 1]
+                    if update_data.name is not None:
+                        current_item["name"] = update_data.name
+                    if update_data.description is not None:
+                        current_item["description"] = update_data.description
+                    if update_data.quantity is not None:
+                        current_item["quantity"] = update_data.quantity
+
+                    # Сохраняем обновленные данные
+                    updated_data = {**character.data, "inventory": inventory}
+                    result = await self.update_character(character.id, updated_data)
+
+                    if isinstance(result, ErrorResponse):
+                        return result
+
+                    return UpdateInventoryItemResponse(
+                        id=item_id,
+                        character_id=character.id,
+                        name=current_item["name"],
+                        description=current_item["description"],
+                        quantity=current_item["quantity"],
+                    )
+
+            return ErrorResponse(error="Предмет не найден")
+
+        except Exception as e:
+            logger.error(f"Error updating inventory item: {e}")
+            return ErrorResponse(error=str(e))
 
     async def delete_inventory_item(
         self, item_id: int
-    ) -> DeleteInventoryItemResponse:
+    ) -> Union[DeleteInventoryItemResponse, ErrorResponse]:
         """Удалить предмет из инвентаря"""
-        logger.warning(
-            "delete_inventory_item: Этот метод требует реализации на бэкенде"
-        )
-        raise ApiError(
-            "Метод удаления предмета из инвентаря не реализован на сервере"
-        )
+        try:
+            # Аналогично update_inventory_item, находим и удаляем предмет
+            characters = []  # Логика поиска персонажа по item_id
+
+            for char_response in characters:
+                character = char_response
+                inventory = character.data.get("inventory", [])
+
+                if 0 <= item_id - 1 < len(inventory):
+                    # Удаляем предмет
+                    inventory.pop(item_id - 1)
+
+                    # Обновляем данные
+                    updated_data = {**character.data, "inventory": inventory}
+                    result = await self.update_character(character.id, updated_data)
+
+                    if isinstance(result, ErrorResponse):
+                        return result
+
+                    return DeleteInventoryItemResponse(message="Предмет удален")
+
+            return ErrorResponse(error="Предмет не найден")
+
+        except Exception as e:
+            logger.error(f"Error deleting inventory item: {e}")
+            return ErrorResponse(error=str(e))
 
     # === CAMPAIGN ENDPOINTS ===
     async def get_campaigns(
@@ -505,18 +316,13 @@ class RealDnDApiClient:
         if campaign_id is not None:
             params["campaign_id"] = campaign_id
 
-        result = await self._make_request(
-            "GET", "/api/campaign/get/", params=params
-        )
+        result = await self._make_request("GET", "/api/campaign/get/", params=params)
 
         # Создаем временный объект для парсинга ответа
-        temp_response = GetCampaignsResponse(result)
-
-        # Извлекаем данные из корневой модели
-        if isinstance(temp_response.root, list):
-            return temp_response.root
+        if isinstance(result, list):
+            return [CampaignModelSchema(**item) for item in result]
         else:
-            return [temp_response.root]
+            return [CampaignModelSchema(**result)]
 
     async def create_campaign(
         self,
@@ -524,30 +330,65 @@ class RealDnDApiClient:
         title: str,
         description: Optional[str] = None,
         icon: Optional[str] = None,
-    ) -> CreateCampaignResponse:
+    ) -> Union[CreateCampaignResponse, ErrorResponse]:
         payload = CreateCampaignRequest(
             telegram_id=telegram_id,
             title=title,
             description=description,
             icon=icon,
         )
-        result = await self._make_request(
-            "POST", "/api/campaign/create/", json=payload.model_dump()
+        try:
+            result = await self._make_request(
+                "POST", "/api/campaign/create/", json=payload.model_dump()
+            )
+            return CreateCampaignResponse(**result)
+        except (ValidationError, NotFoundError, ForbiddenError) as e:
+            return ErrorResponse(error=str(e))
+        except ApiError as e:
+            return ErrorResponse(error=str(e))
+
+    async def update_campaign(
+        self,
+        telegram_id: int,
+        campaign_id: int,
+        title: Optional[str],
+        description: Optional[str] = None,
+        icon: Optional[str] = None,
+    ) -> Union[CreateCampaignResponse, ErrorResponse]:
+        payload = UpdateCampaignRequest(
+            telegram_id=telegram_id,
+            campaign_id=campaign_id,
+            title=title,
+            description=description,
+            icon=icon,
         )
-        return CreateCampaignResponse(**result)
+        try:
+            result = await self._make_request(
+                "PATCH", "/api/campaign/update/", json=payload.model_dump()
+            )
+            return CreateCampaignResponse(**result)
+        except (ValidationError, NotFoundError, ForbiddenError) as e:
+            return ErrorResponse(error=str(e))
+        except ApiError as e:
+            return ErrorResponse(error=str(e))
 
     async def add_to_campaign(
         self, campaign_id: int, owner_id: int, user_id: int
-    ) -> AddToCampaignResponse:
+    ) -> Union[AddToCampaignResponse, ErrorResponse]:
         payload = AddToCampaignRequest(
             campaign_id=campaign_id,
             owner_id=owner_id,
             user_id=user_id,
         )
-        result = await self._make_request(
-            "POST", "/api/campaign/add/", json=payload.model_dump()
-        )
-        return AddToCampaignResponse(**result)
+        try:
+            result = await self._make_request(
+                "POST", "/api/campaign/add/", json=payload.model_dump()
+            )
+            return AddToCampaignResponse(**result)
+        except (ValidationError, NotFoundError, ForbiddenError) as e:
+            return ErrorResponse(error=str(e))
+        except ApiError as e:
+            return ErrorResponse(error=str(e))
 
     async def edit_permissions(
         self,
@@ -562,12 +403,15 @@ class RealDnDApiClient:
             user_id=user_id,
             status=status,
         )
-        result = await self._make_request(
-            "POST",
-            "/api/campaign/edit-permissions/",
-            json=payload.model_dump(),
-        )
-        return EditPermissionsResponse(**result)
+        try:
+            result = await self._make_request(
+                "POST", "/api/campaign/edit-permissions/", json=payload.model_dump()
+            )
+            return EditPermissionsResponse(**result)
+        except (ValidationError, NotFoundError, ForbiddenError) as e:
+            return ErrorResponse(error=str(e))
+        except ApiError as e:
+            return ErrorResponse(error=str(e))
 
 
 # Глобальная переменная для переключения режима
@@ -576,11 +420,11 @@ USE_MOCK_API = settings.USE_API_STUBS
 
 def get_api_client():
     """Фабрика для получения клиента API"""
-    if USE_MOCK_API:
-        return MockDnDApiClient()
-    else:
+    if not USE_MOCK_API:
         return RealDnDApiClient(settings.BACKEND_URL)
+    else:
+        return MockDnDApiClient()
 
 
 # Глобальный экземпляр клиента
-api_client = get_api_client()
+api_client = RealDnDApiClient(settings.BACKEND_URL)

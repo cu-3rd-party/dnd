@@ -37,7 +37,15 @@ class UploadCharacter(BaseModel):
 class CreateCampaignRequest(BaseModel):
     telegram_id: int
     title: str
-    icon: Optional[str] = None  # base64 строка
+    icon: Optional[str] = None  # tgmedia_id
+    description: Optional[str] = None
+
+
+class UpdateCampaignRequest(BaseModel):
+    telegram_id: int
+    campaign_id: int
+    title: Optional[str]
+    icon: Optional[str] = None  # tgmedia_id
     description: Optional[str] = None
 
 
@@ -45,7 +53,7 @@ class CampaignModelSchema(BaseModel):
     id: Optional[int] = None
     title: str
     description: Optional[str] = ""
-    icon: Optional[str] = None  # base64 строка
+    icon: Optional[str] = None  # tgmedia_id
     verified: bool = False
     private: bool = False
 
