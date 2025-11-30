@@ -39,6 +39,7 @@ class ManageCharacters(StatesGroup):
     change_level = State()
     change_rating = State()
     quick_rating = State()
+    add_player = State()
 
 
 class ManageInventory(StatesGroup):

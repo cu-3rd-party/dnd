@@ -30,5 +30,5 @@ class Notifications(StatesGroup):
     main = State()
 
 
-class Invitation:
+class Invitation(StatesGroup):
     main = State()

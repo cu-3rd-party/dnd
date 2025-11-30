@@ -1,4 +1,3 @@
-import json
 import logging
 from aiogram import Router
 from aiogram_dialog.widgets.media import DynamicMedia
@@ -21,9 +20,7 @@ async def get_campaign_manage_data(dialog_manager: DialogManager, **kwargs):
         campaign_data = dialog_manager.start_data.get("selected_campaign", {})
         dialog_manager.dialog_data["selected_campaign"] = campaign_data
 
-    campaign = CampaignModelSchema(
-        **dialog_manager.dialog_data["selected_campaign"]
-    )
+    campaign = CampaignModelSchema(**dialog_manager.dialog_data["selected_campaign"])
 
     icon = None
     if campaign.icon:
@@ -41,9 +38,7 @@ async def get_campaign_manage_data(dialog_manager: DialogManager, **kwargs):
 
 async def update_data(_, result, dialog_manager: DialogManager, **kwargs):
     logger.debug(f"Результат: {result}")
-    dialog_manager.dialog_data["selected_campaign"].update(
-        result["update_data"]
-    )
+    dialog_manager.dialog_data["selected_campaign"].update(result["update_data"])
 
 
 # === Кнопки ===

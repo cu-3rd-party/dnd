@@ -2,7 +2,15 @@ import logging
 from aiogram import Router
 from aiogram.types import BufferedInputFile
 from aiogram_dialog import Dialog, Window, DialogManager
-from aiogram_dialog.widgets.kbd import Button, Row, Group, Back, Cancel, Select
+from aiogram_dialog.widgets.kbd import (
+    Button,
+    Row,
+    Group,
+    Back,
+    Cancel,
+    Select,
+    SwitchTo,
+)
 from aiogram_dialog.widgets.text import Const, Format, Multi
 from aiogram_dialog.widgets.input import TextInput, ManagedTextInput
 from aiogram.types import Message, CallbackQuery
@@ -10,34 +18,32 @@ from functools import partial
 import json
 
 from services.api_client import api_client
-from services.models import GetCharacterResponse, CharacterOut
-from services.invite import QRCodeGenerator, invite_manager
 from . import states as campaign_states
 
 logger = logging.getLogger(__name__)
 
 
 # === Геттеры ===
-async def get_characters(dialog_manager: DialogManager, **kwargs):
-    selected_campaign = dialog_manager.start_data.get("selected_campaign", {})
-    dialog_manager.dialog_data["selected_campaign"] = selected_campaign
+async def get_characters(manager: DialogManager, **kwargs):
+    selected_campaign = manager.start_data.get("selected_campaign", {})
+    manager.dialog_data["selected_campaign"] = selected_campaign
     campaign_id = selected_campaign.get("id", 0)
     characters = await api_client.get_campaign_characters(campaign_id)
 
     return {"characters": characters}
 
 
-async def get_character_data(dialog_manager: DialogManager, **kwargs):
-    character_id = dialog_manager.dialog_data.get("character_id", 0)
+async def get_character_data(manager: DialogManager, **kwargs):
+    character_id = manager.dialog_data.get("character_id", 0)
     character = await api_client.get_character(character_id)
     return {"character": character}
 
 
-async def get_invite_data(dialog_manager: DialogManager, **kwargs):
+async def get_invite_data(manager: DialogManager, **kwargs):
     """Геттер для данных приглашения"""
     return {
-        "invite_url": dialog_manager.dialog_data.get("invite_url", ""),
-        "campaign_name": dialog_manager.dialog_data.get("selected_campaign", {}).get(
+        "invite_url": manager.dialog_data.get("invite_url", ""),
+        "campaign_name": manager.dialog_data.get("selected_campaign", {}).get(
             "title", "Кампания"
         ),
     }
@@ -203,6 +209,50 @@ async def on_level_input(
         await message.answer("❌ Ошибка при обновлении уровня")
 
 
+async def on_add_player(
+    message: Message, widget: ManagedTextInput, manager: DialogManager, text: str
+):
+    if text.startswith("@"):
+
+        username = text.lstrip("@")
+
+        manager.dialog_data["username"] = username
+
+        try:
+            players = await api_client.search_players(username=username)
+            if players:
+                player = players[0]
+                manager.dialog_data["player"] = player
+
+                campaign_id = manager.dialog_data["selected_campaign"].get("id", 0)
+                invited_by_telegram_id = message.from_user.id
+
+                try:
+                    await api_client.create_invitation_by_username(
+                        campaign_id=campaign_id,
+                        username=username,
+                        invited_by_telegram_id=invited_by_telegram_id,
+                    )
+
+                    message.answer("✅ Успешно")
+                    await manager.switch_to(
+                        campaign_states.ManageCharacters.character_selection
+                    )
+
+                except ValueError as e:
+                    logger.warning(e)
+                    await message.answer("❌ Ошибка при отправки приглашения")
+            else:
+                await message.answer(
+                    f"❌ Игрок @{username} не найден в системе.\n"
+                    "Попросите игрока сначала запустить игрового бота."
+                )
+        except Exception as e:
+            logger.warning(e)
+            await message.answer("❌ Ошибка при поиске игрока")
+    await message.answer("Введите имя в формате @username")
+
+
 # === Окна ===
 character_window = Window(
     Const("🧙 Выберите персонажа:"),
@@ -216,10 +266,25 @@ character_window = Window(
         ),
         width=1,
     ),
-    Button(Const("➕ Добавить игрока"), id="add_player", on_click=on_add_player),
+    SwitchTo(
+        Const("➕ Добавить игрока"),
+        id="add_player",
+        state=campaign_states.ManageCharacters.add_player,
+    ),
     Cancel(Const("⬅️ Назад")),
     state=campaign_states.ManageCharacters.character_selection,
     getter=get_characters,
+)
+
+add_player_window = Window(
+    Const("Ввдите @username игрока:"),
+    TextInput(id="username", on_success=on_add_player),
+    SwitchTo(
+        Const("🔙 Назад"),
+        id="swt_chars_menu",
+        state=campaign_states.ManageCharacters.character_selection,
+    ),
+    state=campaign_states.ManageCharacters.add_player,
 )
 
 rating_window = Window(
