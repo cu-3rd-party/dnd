@@ -27,6 +27,8 @@
   redis:
     image: redis:8.2.2-alpine3.22
     container_name: redis
+    ports:
+      - "6379:6379"
     volumes:
       - redis_data:/data
       - ./redis.conf:/usr/local/etc/redis/redis.conf

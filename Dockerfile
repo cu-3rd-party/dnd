@@ -1,13 +1,22 @@
 ﻿FROM python:3.12-slim
 
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:/root/.cargo/bin:${PATH}"
+
 WORKDIR /app
 
-RUN pip install poetry
-
-COPY pyproject.toml poetry.lock* ./
-
-RUN poetry install --no-interaction --no-ansi --no-root
+COPY pyproject.toml uv.lock ./
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev
 
 COPY . .
 
-CMD ["poetry", "run", "python", "main.py"]
+CMD ["uv", "run", "python", "main.py"]
