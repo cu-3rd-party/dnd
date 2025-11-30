@@ -9,7 +9,6 @@ from aiogram_dialog import Dialog, Window, DialogManager
 from aiogram_dialog.widgets.input import TextInput, ManagedTextInput
 from aiogram_dialog.widgets.kbd import Button, Row, Group, Back, Cancel, Select
 from aiogram_dialog.widgets.text import Const, Format, Multi
-from services.invite import QRCodeGenerator, invite_manager
 
 from services.api_client import api_client
 from . import states as campaign_states
@@ -220,9 +219,7 @@ character_window = Window(
         ),
         width=1,
     ),
-    Button(
-        Const("➕ Добавить игрока"), id="add_player", on_click=on_add_player
-    ),
+    Button(Const("➕ Добавить игрока"), id="add_player", on_click=...),
     Cancel(Const("⬅️ Назад")),
     state=campaign_states.ManageCharacters.character_selection,
     getter=get_characters,
