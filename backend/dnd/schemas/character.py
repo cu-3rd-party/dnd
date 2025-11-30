@@ -8,7 +8,7 @@ class UploadCharacter(Schema):
 
 
 class CharacterOut(Schema):
-    id: int
+    id_: int
     owner_id: int
     owner_telegram_id: int
     campaign_id: int

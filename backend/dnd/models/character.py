@@ -1,23 +1,21 @@
-import json
-
-from django.core.files.base import ContentFile
 from django.db import models
-
-from dnd.models.campaign import Campaign
-from dnd.models.player import Player
+from django.core.files.base import ContentFile
+import json
 
 
 class Character(models.Model):
     id = models.AutoField(auto_created=True, primary_key=True)
     owner = models.ForeignKey(
-        Player,
+        "Player",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
     )
-    campaign = models.ForeignKey(Campaign, models.CASCADE, null=True)
-
+    campaign = models.ForeignKey("Campaign", models.CASCADE, null=True, blank=True)
     data = models.FileField(upload_to="chardata")
+
+    class Meta:
+        db_table = "characters"
 
     def load_data(self):
         """Internal function that loads data from file stored in database."""
@@ -26,9 +24,7 @@ class Character(models.Model):
 
     def save_data(self, data: dict):
         """Internal function that saves data to a file stored in database."""
-        self.data.save(
-            f"{self.id}.json", ContentFile(json.dumps(data)), save=False
-        )
+        self.data.save(f"{self.id}.json", ContentFile(json.dumps(data)), save=False)
 
     def get(self, *args):
         """
@@ -58,7 +54,7 @@ class Character(models.Model):
                 cur = cur[arg]
             except (KeyError, IndexError, TypeError):
                 return False
-        for n, v in kwargs:
+        for n, v in kwargs.items():
             cur[n] = v
         self.save_data(data)
         return True
