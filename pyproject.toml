@@ -10,9 +10,6 @@ dependencies = [
     "redis (>=6.4.0,<7.0.0)",
     "httpx==0.28.1",
     "pillow==11.3.0",
-    "Django==5.2.6",
-    "django-ninja==1.4.3",
-    "djangorestframework==3.16.1",
     "requests==2.32.5",
     "beautifulsoup4==4.13.5",
     "gunicorn==23.0.0",
@@ -21,6 +18,8 @@ dependencies = [
     "coverage==7.10.7",
     "pydantic==2.11.10",
     "psycopg2-binary==2.9.11",
+    "tortoise-orm>=0.25.1",
+    "aerich==0.9.2",
 ]
 
 [project.optional-dependencies]
@@ -95,3 +94,8 @@ ignore = [
 ]
 select = ["ALL"]
 task-tags = ["TODO"]
+
+[tool.aerich]
+tortoise_orm = "services.settings.settings.tortoise_orm"
+location = "./migrations"
+src_folder = "./."

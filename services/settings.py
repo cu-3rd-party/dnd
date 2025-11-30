@@ -39,16 +39,16 @@ class Settings(BaseSettings):
     @property
     def postgres_dsn(self) -> str:
         return (
-            f"postgresql://{self.pg_user}:{self.pg_password}@"
-            f"{self.pg_host}:{self.pg_port}/{self.pg_db}"
+            f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}@"
+            f"{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
         )
 
     @computed_field
     @property
     def tortoise_db_url(self) -> str:
         return (
-            f"postgres://{self.pg_user}:{self.pg_password}@"
-            f"{self.pg_host}:{self.pg_port}/{self.pg_db}"
+            f"postgres://{self.DB_USER}:{self.DB_PASSWORD}@"
+            f"{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
         )
 
     @computed_field

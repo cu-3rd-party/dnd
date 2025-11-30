@@ -13,6 +13,8 @@ from aiogram.fsm.storage.base import DefaultKeyBuilder
 from aiogram.fsm.storage.redis import RedisStorage
 from aiogram_dialog import setup_dialogs
 
+from db.main import init_db, close_db
+from services import json
 from services.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -57,10 +59,12 @@ def register_all_handlers(
         logger.warning("Не найдено ни одного роутера для регистрации")
 
 
-async def on_startup(bot: Bot) -> None: ...
+async def on_startup(bot: Bot) -> None:
+    await init_db()
 
 
-async def on_shutdown(bot: Bot) -> None: ...
+async def on_shutdown(bot: Bot) -> None:
+    await close_db()
 
 
 async def run_bot(
@@ -78,6 +82,8 @@ async def run_bot(
             db=redis_db,
         ),
         key_builder=DefaultKeyBuilder(with_destiny=True),
+        json_dumps=json.json_dumps,
+        json_loads=json.json_loads,
     )
 
     bot = Bot(
