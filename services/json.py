@@ -1,4 +1,4 @@
-﻿import json
+import json
 from uuid import UUID
 
 
@@ -25,5 +25,3 @@ def json_loads(data: str):
 def json_dumps(obj) -> str:
     """JSON dumper that serializes UUIDs."""
     return json.dumps(obj, cls=JSONEncoder)
-
-

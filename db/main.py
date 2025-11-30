@@ -1,4 +1,4 @@
-﻿import logging
+import logging
 
 from tortoise import Tortoise
 
