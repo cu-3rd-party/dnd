@@ -14,7 +14,9 @@ from aiogram_dialog.widgets.text import Const, Format
 
 from db.models import Invite, User
 from services.character import CharacterData, parse_character_data
+from services.character_data import character_preview_getter
 from states.academy import Academy
+from states.rating import AcademyRating
 from states.start_simple import StartSimple
 from states.upload_character import UploadCharacter
 
@@ -29,30 +31,18 @@ async def on_update(c: CallbackQuery, b: Button, m: DialogManager):
     await m.start(UploadCharacter.upload, data={"source": "user"})
 
 
-async def on_rating(c: CallbackQuery, b: Button, m: DialogManager): ...
+async def on_rating(c: CallbackQuery, b: Button, m: DialogManager):
+    await m.start(AcademyRating.rating)
 
 
 async def on_campaigns(c: CallbackQuery, b: Button, m: DialogManager): ...
 
 
 async def character_data_getter(dialog_manager: DialogManager, **kwargs) -> dict:
-    ret = {}
-
     user = dialog_manager.middleware_data["user"]
     data = json.loads(user.data["data"])
 
-    info: CharacterData = parse_character_data(data)
-    ret["character_data_preview"] = info.preview()
-    avatar_url = data.get("avatar", {}).get("webp")
-    if avatar_url:
-        ret["avatar"] = MediaAttachment(
-            url=avatar_url,
-            type=ContentType.PHOTO,
-        )
-    else:
-        logger.warning("No avatar for user %d", user.id)
-
-    return ret
+    return character_preview_getter(user, data)
 
 
 router.include_router(
