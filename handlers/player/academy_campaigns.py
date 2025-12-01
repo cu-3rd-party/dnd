@@ -14,7 +14,7 @@ from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format
 from pydantic.v1 import UUID4
 
-from db.models import Invite, User, Campaign, Participation
+from db.models import Invitation, User, Campaign, Participation
 from services.character import CharacterData, parse_character_data
 from services.character_data import character_preview_getter
 from states.academy import Academy

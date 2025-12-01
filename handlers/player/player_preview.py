@@ -12,7 +12,7 @@ from aiogram_dialog.widgets.kbd import Column, Button, Cancel, ScrollingGroup, S
 from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format
 
-from db.models import Invite, User
+from db.models import Invitation, User
 from services.character import CharacterData, parse_character_data
 from services.character_data import character_preview_getter
 from states.academy import Academy
