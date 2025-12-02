@@ -22,7 +22,6 @@ logger = logging.getLogger(__name__)
 
 # === Гетеры ===
 async def get_confirm_data(dialog_manager: DialogManager, **kwargs):
-
     icon = None
     if file_id := dialog_manager.dialog_data.get("icon"):
         icon = MediaAttachment(type=ContentType.PHOTO, file_id=MediaId(file_id))

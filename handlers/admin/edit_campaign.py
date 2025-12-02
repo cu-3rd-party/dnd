@@ -20,12 +20,8 @@ logger = logging.getLogger(__name__)
 async def get_campaign_edit_data(manager: DialogManager, **kwargs):
     if "campaign_id" not in manager.dialog_data:
         if isinstance(manager.start_data, dict):
-            manager.dialog_data["campaign_id"] = manager.start_data.get(
-                "campaign_id", 0
-            )
-            manager.dialog_data["participation_id"] = manager.start_data.get(
-                "participation_id", 0
-            )
+            manager.dialog_data["campaign_id"] = manager.start_data.get("campaign_id", 0)
+            manager.dialog_data["participation_id"] = manager.start_data.get("participation_id", 0)
 
     campaign = await Campaign.get(manager.dialog_data.get("campaign_id", 0))
 
@@ -38,9 +34,7 @@ async def get_campaign_edit_data(manager: DialogManager, **kwargs):
 
     return {
         "campaign_title": manager.dialog_data["new_data"].get("title", campaign.title),
-        "campaign_description": manager.dialog_data["new_data"].get(
-            "describe", campaign.describe
-        ),
+        "campaign_description": manager.dialog_data["new_data"].get("describe", campaign.describe),
         "icon": icon,
     }
 
@@ -164,9 +158,7 @@ edit_description_window = Window(
 )
 
 edit_icon_window = Window(
-    Const(
-        "🎨 Загрузите иконку для вашей:\nОтправьте изображение как фото " "(не файлом)"
-    ),
+    Const("🎨 Загрузите иконку для вашей:\nОтправьте изображение как фото (не файлом)"),
     MessageInput(func=on_icon_entered, content_types=ContentType.PHOTO),
     SwitchTo(
         Const("⬅️ Назад"),

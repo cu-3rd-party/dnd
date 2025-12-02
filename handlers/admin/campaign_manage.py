@@ -19,12 +19,8 @@ logger = logging.getLogger(__name__)
 async def get_campaign_manage_data(manager: DialogManager, **kwargs):
     if "campaign_id" not in manager.dialog_data:
         if isinstance(manager.start_data, dict):
-            manager.dialog_data["campaign_id"] = manager.start_data.get(
-                "campaign_id", 0
-            )
-            manager.dialog_data["participation_id"] = manager.start_data.get(
-                "participation_id", 0
-            )
+            manager.dialog_data["campaign_id"] = manager.start_data.get("campaign_id", 0)
+            manager.dialog_data["participation_id"] = manager.start_data.get("participation_id", 0)
 
     campaign_id = manager.dialog_data.get("campaign_id", 0)
 
@@ -47,9 +43,7 @@ async def update_data(_, result, dialog_manager: DialogManager, **kwargs):
 
 
 # === Кнопки ===
-async def on_edit_info(
-    callback: CallbackQuery, button: Button, dialog_manager: DialogManager
-):
+async def on_edit_info(callback: CallbackQuery, button: Button, dialog_manager: DialogManager):
     selected_campaign = dialog_manager.dialog_data.get("selected_campaign", {})
     await dialog_manager.start(
         states.EditCampaignInfo.select_field,
@@ -57,9 +51,7 @@ async def on_edit_info(
     )
 
 
-async def on_manage_characters(
-    callback: CallbackQuery, button: Button, dialog_manager: DialogManager
-):
+async def on_manage_characters(callback: CallbackQuery, button: Button, dialog_manager: DialogManager):
     selected_campaign = dialog_manager.dialog_data.get("selected_campaign", {})
     await dialog_manager.start(
         states.ManageCharacters.character_selection,
@@ -67,9 +59,7 @@ async def on_manage_characters(
     )
 
 
-async def on_permissions(
-    callback: CallbackQuery, button: Button, dialog_manager: DialogManager
-):
+async def on_permissions(callback: CallbackQuery, button: Button, dialog_manager: DialogManager):
     selected_campaign = dialog_manager.dialog_data.get("selected_campaign", {})
     await dialog_manager.start(
         states.EditPermissions.main,
@@ -96,11 +86,7 @@ async def on_permissions(
 # === Окна ===
 campaign_manage_window = Window(
     DynamicMedia("icon"),
-    Format(
-        "🎓 Управление группой: {campaign_title}\n\n"
-        "Описание: {campaign_description}\n"
-        "Выберите действие:"
-    ),
+    Format("🎓 Управление группой: {campaign_title}\n\nОписание: {campaign_description}\nВыберите действие:"),
     Group(
         Button(
             Const("🤝 Встречи"),
