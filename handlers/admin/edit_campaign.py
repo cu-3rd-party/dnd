@@ -27,9 +27,7 @@ async def get_campaign_edit_data(dialog_manager: DialogManager, **kwargs):
             dialog_manager.dialog_data["participation_id"] = dialog_manager.start_data.get("participation_id", 0)
 
     campaign = await Campaign.get(id=dialog_manager.dialog_data.get("campaign_id", 0))
-    participation = await Participation.get(
-        id=dialog_manager.dialog_data.get("participation_id", 0)
-    )
+    participation = await Participation.get(id=dialog_manager.dialog_data.get("participation_id", 0))
 
     if "new_data" not in dialog_manager.dialog_data:
         dialog_manager.dialog_data["new_data"] = dict()
@@ -122,12 +120,8 @@ async def on_edit_confirm(mes: CallbackQuery, wid: Button, dialog_manager: Dialo
         await mes.answer("❌ Ошибка при обновлении", show_alert=True)
 
 
-async def on_remove_campaign(
-    callback: CallbackQuery, button: Button, dialog_manager: DialogManager
-):
-    campaign: Campaign = await Campaign.get(
-        id=dialog_manager.dialog_data["campaign_id"]
-    )
+async def on_remove_campaign(callback: CallbackQuery, button: Button, dialog_manager: DialogManager):
+    campaign: Campaign = await Campaign.get(id=dialog_manager.dialog_data["campaign_id"])
 
     try:
         title = campaign.title
@@ -228,9 +222,7 @@ confirm_edit_window = Window(
 )
 confirm_delete_window = Window(
     Format("🎯 Вы точно хотите удалить {campaign_title}\n ЭТО ДЕЙСТВИЕ НЕ ОТМЕНИТЬ"),
-    Button(
-        Const("🚫 Удалить кампанию"), id="remove_campaign", on_click=on_remove_campaign
-    ),
+    Button(Const("🚫 Удалить кампанию"), id="remove_campaign", on_click=on_remove_campaign),
     SwitchTo(
         Const("⬅️ Назад"),
         id="back",

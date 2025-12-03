@@ -17,9 +17,7 @@ logger = logging.getLogger(__name__)
 async def get_campaigns_data(dialog_manager: DialogManager, **kwargs):
     user: User = dialog_manager.middleware_data["user"]
     return {
-        "campaigns": await Participation.filter(user=user)
-        .prefetch_related("campaign")
-        .all(),
+        "campaigns": await Participation.filter(user=user).prefetch_related("campaign").all(),
         "is_admin": user.admin,
     }
 
@@ -31,9 +29,7 @@ async def on_campaign_selected(
     dialog_manager: DialogManager,
     participation_id,
 ):
-    participation: Participation = await Participation.get(
-        id=participation_id
-    ).prefetch_related("campaign")
+    participation: Participation = await Participation.get(id=participation_id).prefetch_related("campaign")
     await dialog_manager.start(
         states.CampaignManage.main,
         data={
@@ -70,9 +66,7 @@ campaign_list_window = Window(
     Button(
         Const("➕ Создать новую (Для академии)"),
         id="create_verified_campaign",
-        on_click=lambda c, b, d: d.start(
-            states.CreateCampaign.select_title, data={"verified": True}
-        ),
+        on_click=lambda c, b, d: d.start(states.CreateCampaign.select_title, data={"verified": True}),
         when="is_admin",
     ),
     state=states.CampaignList.main,

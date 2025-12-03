@@ -25,19 +25,13 @@ logger = logging.Logger(__name__)
 async def get_permissions_data(dialog_manager: DialogManager, **kwargs):
     if "campaign_id" not in dialog_manager.dialog_data:
         if isinstance(dialog_manager.start_data, dict):
-            dialog_manager.dialog_data["campaign_id"] = dialog_manager.start_data.get(
-                "campaign_id", 0
-            )
-            dialog_manager.dialog_data["participation_id"] = (
-                dialog_manager.start_data.get("participation_id", 0)
-            )
+            dialog_manager.dialog_data["campaign_id"] = dialog_manager.start_data.get("campaign_id", 0)
+            dialog_manager.dialog_data["participation_id"] = dialog_manager.start_data.get("participation_id", 0)
 
     campaign = await Campaign.get(id=dialog_manager.dialog_data.get("campaign_id", 0))
 
     p_users: list[Participation] = await (
-        Participation.filter(campaign=campaign, role=Role.MASTER)
-        .prefetch_related("user")
-        .all()
+        Participation.filter(campaign=campaign, role=Role.MASTER).prefetch_related("user").all()
     )
 
     return {"users": p_users, "campaign": campaign}
@@ -61,9 +55,7 @@ async def on_user_selected(
     await dialog_manager.switch_to(states.EditPermissions.selected_master)
 
 
-async def on_remove_user(
-    callback: CallbackQuery, button: Button, dialog_manager: DialogManager
-):
+async def on_remove_user(callback: CallbackQuery, button: Button, dialog_manager: DialogManager):
     participation_id = dialog_manager.dialog_data["selected_participation_id"]
     selected_participation: Participation = await Participation.get(id=participation_id)
 
@@ -109,7 +101,7 @@ permissions_main_window = Window(
 )
 
 select_permission_window = Window(
-    Format("🎯 Изменение доступа\n\n" "Мастер: {user.username}\n"),
+    Format("🎯 Изменение доступа\n\nМастер: {user.username}\n"),
     Button(Const("🚫 Удалить мастера"), id="remove_user", on_click=on_remove_user),
     SwitchTo(
         Const("⬅️ Назад к списку"),
