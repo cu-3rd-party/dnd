@@ -16,7 +16,7 @@ from tortoise.exceptions import OperationalError
 
 from db.models.campaign import Campaign
 from db.models.participation import Participation
-from services.role import Role
+from utils.role import Role
 from services.settings import settings
 
 from . import states

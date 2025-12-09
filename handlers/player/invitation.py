@@ -7,7 +7,8 @@ from aiogram_dialog.widgets.kbd import Button, Cancel
 from aiogram_dialog.widgets.text import Const, Format
 
 from db.models import Invitation
-from services.invitation import get_invite_id, handle_accept_invitation, invitation_getter
+from services.invitation import handle_accept_invitation, invitation_getter
+from utils.invitation import get_invite_id
 from states.academy_campaigns import AcademyCampaignPreview
 from states.invitation import InvitationAccept
 

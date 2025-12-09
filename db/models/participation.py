@@ -1,6 +1,6 @@
 from tortoise import fields
 
-from services.role import Role
+from utils.role import Role
 
 from .base import TimestampedModel, UuidModel
 

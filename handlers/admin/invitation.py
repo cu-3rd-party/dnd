@@ -14,8 +14,9 @@ from aiogram_dialog.widgets.text import Const, Format
 from db.models import Invitation
 from db.models.campaign import Campaign
 from db.models.user import User
-from services.invitation import generate_link, generate_qr, handle_accept_invitation, invitation_getter
-from services.role import Role
+from services.invitation import handle_accept_invitation, invitation_getter
+from utils.invitation import generate_link, generate_qr
+from utils.role import Role
 from services.settings import settings
 from states.academy_campaigns import AcademyCampaignPreview
 
