@@ -13,15 +13,12 @@ from tortoise.exceptions import ConfigurationError, OperationalError
 
 from db.models.campaign import Campaign
 from db.models.participation import Participation
+from services.settings import settings
 from utils.role import Role
 
 from . import states
 
 logger = logging.getLogger(__name__)
-
-# === Константы ===
-MAX_TITLE_LEN = 255
-MAX_DESCRIPTION_LEN = 1023
 
 
 # === Гетеры ===
@@ -68,7 +65,7 @@ async def on_title_edited(
     dialog_manager: DialogManager,
     text: str,
 ):
-    if len(text) > MAX_TITLE_LEN:
+    if len(text) > settings.MAX_TITLE_LEN:
         await mes.answer("Название слишком длинное (максимум 255 символов)")
         return
 
@@ -83,7 +80,7 @@ async def on_description_edited(
     dialog_manager: DialogManager,
     text: str,
 ):
-    if len(text) > MAX_DESCRIPTION_LEN:
+    if len(text) > settings.MAX_DESCRIPTION_LEN:
         await mes.answer("Описание слишком длинное (максимум 1023 символа)")
         return
 

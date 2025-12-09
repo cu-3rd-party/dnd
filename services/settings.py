@@ -24,6 +24,13 @@ class Settings(BaseSettings):
     TOKEN_PLAYER: str = ""
     ADMIN_IDS: set[int] = set()
 
+    # ADMIN
+    MAX_TITLE_LEN: int = 255
+    MAX_DESCRIPTION_LEN: int = 1023
+    MAX_LEVEL: int = 20  # D&D максимальный уровень
+    MAX_RATING: int = 1000
+    MAX_ITEM_QUANTITY: int = 1000
+
     # ^ PostgreSQL
     DB_HOST: str = "db"
     DB_PORT: int = 5432

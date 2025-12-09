@@ -14,6 +14,7 @@ from tortoise.exceptions import IncompleteInstanceError, IntegrityError, Operati
 
 from db.models.campaign import Campaign
 from db.models.participation import Participation
+from services.settings import settings
 from utils.role import Role
 
 from . import states
@@ -22,10 +23,6 @@ if TYPE_CHECKING:
     from db.models.user import User
 
 logger = logging.getLogger(__name__)
-
-# === Константы ===
-MAX_TITLE_LEN = 255
-MAX_DESCRIPTION_LEN = 1023
 
 
 # === Гетеры ===
@@ -48,7 +45,7 @@ async def on_title_entered(
     dialog_manager: DialogManager,
     text: str,
 ):
-    if len(text) > MAX_TITLE_LEN:
+    if len(text) > settings.MAX_TITLE_LEN:
         await mes.answer("Максимум 255 символов")
         return
     dialog_manager.dialog_data["title"] = text
@@ -61,7 +58,7 @@ async def on_description_entered(
     dialog_manager: DialogManager,
     text: str,
 ):
-    if len(text) > MAX_DESCRIPTION_LEN:
+    if len(text) > settings.MAX_DESCRIPTION_LEN:
         mes.answer("Максимум 1023 символа, можно пропустить")
         return
     dialog_manager.dialog_data["description"] = text
