@@ -15,7 +15,6 @@ from aiogram_dialog.widgets.kbd import (
     Row,
     ScrollingGroup,
     Select,
-    Start,
     SwitchTo,
     Url,
 )
