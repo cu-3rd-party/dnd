@@ -27,6 +27,7 @@ from db.models.character import Character
 from db.models.participation import Participation
 from db.models.user import User
 from services.character_data import character_preview_getter
+from services.settings import settings
 from utils.character import parse_character_data
 from utils.role import Role
 
@@ -39,11 +40,6 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
-
-
-# === Константы ===
-MAX_LEVEL = 20  # D&D максимальный уровень
-MAX_RATING = 1000
 
 
 # === Гетеры ===
@@ -149,7 +145,7 @@ async def on_quick_rating_change(callback: CallbackQuery, widget: Button, dialog
         new_rating = user.rating + change
 
         new_rating = max(new_rating, 0)
-        new_rating = min(new_rating, MAX_RATING)
+        new_rating = min(new_rating, settings.MAX_RATING)
 
         user.rating = new_rating
         await user.save()
@@ -169,7 +165,7 @@ async def on_rating_input(message: Message, widget: ManagedTextInput, dialog_man
 
         user = await User.get(id=character_id)
 
-        rating = min(max(0, rating), MAX_RATING)
+        rating = min(max(0, rating), settings.MAX_RATING)
 
         user.rating = rating
         await user.save()
@@ -193,8 +189,8 @@ async def on_level_input(message: Message, widget: ManagedTextInput, dialog_mana
         if level < 1:
             await message.answer("❌ Уровень должен быть не меньше 1")
             return
-        if level > MAX_LEVEL:
-            await message.answer(f"❌ Уровень не может превышать {MAX_LEVEL}")
+        if level > settings.MAX_LEVEL:
+            await message.answer(f"❌ Уровень не может превышать {settings.MAX_LEVEL}")
             return
 
         character = await get_character_data(character_id)
@@ -331,7 +327,7 @@ character_detail_window = Window(
 )
 
 change_level_window = Window(
-    Const(f"📈 Введите новый уровень персонажа (1-{MAX_LEVEL}):"),
+    Const(f"📈 Введите новый уровень персонажа (1-{settings.MAX_LEVEL}):"),
     Format("Сейчас установлен уровень: {level}"),
     TextInput(
         id="level_input",
