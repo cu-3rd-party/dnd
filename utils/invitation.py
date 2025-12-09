@@ -8,8 +8,8 @@ from aiogram import Bot
 from aiogram_dialog import DialogManager
 
 from db.models import Invitation
-from utils.role import Role
 from services.settings import settings
+from utils.role import Role
 
 
 async def generate_link(invitation: Invitation) -> str:
