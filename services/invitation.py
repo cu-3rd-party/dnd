@@ -1,22 +1,18 @@
 import logging
-import re
-import tempfile
-import uuid
-from pathlib import Path
 
-import qrcode
-from aiogram import Bot
+from aiogram.types import CallbackQuery
+from aiogram_dialog import DialogManager
 
-from db.models.invitation import Invitation
-from services.role import Role
+from db.models import Invitation, Participation, User
+from utils.invitation import get_invite_id
 
 from .settings import settings
 
 logger = logging.getLogger(__name__)
 
 
-async def generate_link(invitation: Invitation) -> str:
-    bot = settings.player_bot if invitation.role == Role.PLAYER else settings.admin_bot
+async def invitation_getter(dialog_manager: DialogManager, **kwargs):
+    invite = await Invitation.get_or_none(id=get_invite_id(dialog_manager)).prefetch_related("campaign")
 
     if isinstance(bot, Bot):
         bot_name = (await bot.get_me()).username
@@ -27,27 +23,19 @@ async def generate_link(invitation: Invitation) -> str:
     return f"https://t.me/{bot_name}?start={invitation.start_data}"
 
 
-async def generate_qr(link: str) -> str:
-    """Генерация QR-кода и возвращения пути к нему"""
+async def handle_accept_invitation(m: DialogManager, callback: CallbackQuery, user: User, invitation: Invitation):
+    participation = await Participation.create(user=user, campaign=invitation.campaign, role=invitation.role)
 
-    temp_dir = Path(tempfile.gettempdir()) / "bot_qr_codes"
-    temp_dir.mkdir(parents=True, exist_ok=True)
+    await callback.answer(f"Приглашение в кампанию {invitation.campaign.title} принято!")
 
-    match = re.search(r"start=([a-f0-9\-]+)", link)
-    filename = f"qr_{match.group(1)}.png" if match else f"qr_{uuid.uuid4()}.png"
+    if invitation.created_by is not None:
+        if settings.admin_bot is None:
+            msg = "bot is not specified"
+            raise TypeError(msg)
+        await settings.admin_bot.send_message(
+            invitation.created_by.id, f"ℹ️ @{user.username} (Игрок) принял приглашение в {invitation.campaign.title}"
+        )
 
-    filepath = temp_dir / filename
+    await m.done()
 
-    qr = qrcode.QRCode(
-        version=1,
-        error_correction=qrcode.ERROR_CORRECT_L,
-        box_size=10,
-        border=4,
-    )
-    qr.add_data(link)
-    qr.make(fit=True)
-
-    img = qr.make_image(fill_color="black", back_color="white").get_image()
-    img.save(filepath, format="PNG")
-
-    return str(filepath)
+    return participation

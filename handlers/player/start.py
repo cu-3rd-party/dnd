@@ -8,11 +8,11 @@ from aiogram_dialog.widgets.kbd import Button, Column
 from aiogram_dialog.widgets.text import Const
 
 from db.models import Invitation, User
-from services.uuid import is_valid_uuid
 from states.academy import Academy
 from states.invitation import InvitationAccept
 from states.start_simple import StartSimple
 from states.upload_character import UploadCharacter
+from utils.uuid import is_valid_uuid
 
 logger = logging.getLogger(__name__)
 router = Router()

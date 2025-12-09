@@ -6,7 +6,7 @@ from aiogram.types import Message
 from aiogram_dialog import DialogManager, StartMode
 
 from db.models import Invitation, User
-from services.uuid import is_valid_uuid
+from utils.uuid import is_valid_uuid
 
 from . import states
 

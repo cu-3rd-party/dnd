@@ -5,7 +5,7 @@ from aiogram_dialog.api.entities import MediaAttachment
 
 from db.models import User
 from db.models.base import CharacterData as BaseCharacterData
-from services.character import CharacterData, parse_character_data
+from utils.character import CharacterData, parse_character_data
 
 logger = logging.getLogger(__name__)
 

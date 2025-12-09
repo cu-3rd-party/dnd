@@ -19,8 +19,8 @@ from aiogram.fsm.storage.redis import RedisStorage
 from aiogram_dialog import setup_dialogs
 
 from db.main import close_db, init_db
-from services import json
 from services.settings import settings
+from utils import json
 
 logger = logging.getLogger(__name__)
 

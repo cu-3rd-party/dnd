@@ -11,13 +11,14 @@ from aiogram_dialog.widgets.link_preview import LinkPreview
 from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format
 
-from db.models import Invitation, Participation
+from db.models import Invitation
 from db.models.campaign import Campaign
 from db.models.user import User
-from services.invitation import generate_link, generate_qr
-from services.role import Role
+from services.invitation import handle_accept_invitation, invitation_getter
 from services.settings import settings
 from states.academy_campaigns import AcademyCampaignPreview
+from utils.invitation import generate_link, generate_qr
+from utils.role import Role
 
 from . import states
 
@@ -25,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 # === Гетеры ===
-async def get_link(dialog_manager: DialogManager, **kwargs):
+async def get_link(dialog_manager: DialogManager, **_):
     created_by: User = dialog_manager.middleware_data["user"]
 
     if "link" not in dialog_manager.dialog_data and isinstance(dialog_manager.start_data, dict):
@@ -48,37 +49,15 @@ async def get_link(dialog_manager: DialogManager, **kwargs):
     return {"link": link}
 
 
-async def get_qr(dialog_manager: DialogManager, **kwargs):
+async def get_qr(dialog_manager: DialogManager, **_):
     link = dialog_manager.dialog_data["link"]
     path = await generate_qr(link)
     qr_img = MediaAttachment(ContentType.PHOTO, path=path)
     return {"qr": qr_img}
 
 
-async def invitation_getter(dialog_manager: DialogManager, **kwargs):
-    if "invite" not in dialog_manager.dialog_data and isinstance(dialog_manager.start_data, dict):
-        invite_id = dialog_manager.start_data.get("invitation_id")
-        if not invite_id:
-            msg = "Invitation ID is not specified"
-            raise ValueError(msg)
-
-        dialog_manager.dialog_data["invite_id"] = invite_id
-
-    invite_id = dialog_manager.dialog_data["invite_id"]
-    invite = await Invitation.get_or_none(id=invite_id).prefetch_related("campaign")
-
-    if invite is None:
-        msg = "Invitation not found"
-        raise ValueError(msg)
-
-    return {
-        "campaign_title": invite.campaign.title,
-        "role": invite.role.name,
-    }
-
-
 # === Кнопки ===
-async def on_regenerate_link(mes: CallbackQuery, wid: Button, dialog_manager: DialogManager):
+async def on_regenerate_link(mes: CallbackQuery, _: Button, dialog_manager: DialogManager):
     invite_data = dialog_manager.dialog_data["invite_data"]
     campaign = await Campaign.get(id=invite_data["campaign_id"])
     created_by = await User.get(id=invite_data["created_by_id"])
@@ -95,7 +74,7 @@ async def on_regenerate_link(mes: CallbackQuery, wid: Button, dialog_manager: Di
 
 async def on_username_entered(
     mes: Message,
-    wid: ManagedTextInput,
+    _: ManagedTextInput,
     dialog_manager: DialogManager,
     text: str,
 ):
@@ -136,7 +115,7 @@ async def on_username_entered(
     await dialog_manager.done()
 
 
-async def on_accept(c: CallbackQuery, b: Button, m: DialogManager):
+async def on_accept(c: CallbackQuery, _: Button, m: DialogManager):
     invite_id = m.dialog_data.get("invite_id")
     if not invite_id:
         await c.answer("❌ Приглашение не найдено", show_alert=True)
@@ -149,21 +128,9 @@ async def on_accept(c: CallbackQuery, b: Button, m: DialogManager):
         await m.reset_stack()
         return
 
-    created_by = invite.created_by
     user = m.middleware_data["user"]
-    participation = await Participation.create(user=user, campaign=invite.campaign, role=invite.role)
 
-    await c.answer(f"Приглашение в кампанию {invite.campaign.title} принято!")
-
-    if created_by is not None:
-        if settings.admin_bot is None:
-            msg = "bot is not specified"
-            raise TypeError(msg)
-        await settings.admin_bot.send_message(
-            created_by.id, f"ℹ️ @{user.username} (Мастер) принял приглашение в {invite.campaign.title}"
-        )
-
-    await m.done()
+    participation = await handle_accept_invitation(m, c, user, invite)
 
     if invite.campaign.verified:
         await m.start(
