@@ -7,7 +7,18 @@ from aiogram import Router
 from aiogram.types import BufferedInputFile, CallbackQuery, Message
 from aiogram_dialog import Dialog, DialogManager, Window
 from aiogram_dialog.widgets.input import ManagedTextInput, TextInput
-from aiogram_dialog.widgets.kbd import Back, Button, Cancel, Group, Row, ScrollingGroup, Select, Start, SwitchTo
+from aiogram_dialog.widgets.kbd import (
+    Back,
+    Button,
+    Cancel,
+    Group,
+    Row,
+    ScrollingGroup,
+    Select,
+    Start,
+    SwitchTo,
+    Url,
+)
 from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format, Multi
 from tortoise.exceptions import IncompleteInstanceError, IntegrityError, OperationalError
@@ -81,16 +92,22 @@ async def preview_getter(dialog_manager: DialogManager, **kwargs):
     data = json.loads(character.data["data"])
 
     if isinstance(character, User):
+        profile_link = f"https://t.me/{character.username}" if character.username else f"tg://user?id={character.id}"
+    else:
+        user = character.user
+        profile_link = f"https://t.me/{user.username}" if user.username else f"tg://user?id={user.id}"
+
+    if isinstance(character, User):
         character_preview = character_preview_getter(character, data)
         return {
-            "profile_link": f"tg://user?id={character.id}",
+            "profile_link": profile_link,
             "user": character,
             "is_verified": True,
             **character_preview,
         }
     user = character.user
     return {
-        "profile_link": f"tg://user?id={user.id}",
+        "profile_link": profile_link,
         "user": user,
         "is_verified": False,
         **character_preview_getter(user, data),
@@ -273,8 +290,7 @@ character_detail_window = Window(
     Format("Игрок: @{user.username}"),
     Format("Текущий рейтинг: {user.rating}", when="is_verified"),
     Format("{character_data_preview}", when="character_data_preview"),
-    # TODO(BratLaym): Fix: Url(Const("Перейти в профиль"), Format("{profile_link}")),
-    # https://github.com/cu-3rd-party/dnd/issues/18#issue-3708051234
+    Url(Const("Перейти в профиль"), Format("{profile_link}")),
     Group(
         SwitchTo(
             Const("📈 Изменить уровень"),
