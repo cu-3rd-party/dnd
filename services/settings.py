@@ -1,3 +1,11 @@
+"""
+Содержит настройки приложения и всевозможные константы, которые задаются через .env
+
+Из этого модуля следует экспортировать объект settings, например:
+```
+from services.settings import settings
+```
+"""
 from typing import Any
 from zoneinfo import ZoneInfo
 

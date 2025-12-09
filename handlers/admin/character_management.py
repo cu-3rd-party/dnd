@@ -16,9 +16,9 @@ from db.models.campaign import Campaign
 from db.models.character import Character
 from db.models.participation import Participation
 from db.models.user import User
-from services.character import parse_character_data
+from utils.character import parse_character_data
 from services.character_data import character_preview_getter
-from services.role import Role
+from utils.role import Role
 
 from . import states
 
