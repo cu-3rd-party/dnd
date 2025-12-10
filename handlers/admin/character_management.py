@@ -194,7 +194,7 @@ async def on_level_input(message: Message, widget: ManagedTextInput, dialog_mana
             return
 
         character = await get_character_data(character_id)
-        character_data = character.data
+        character_data = character.data or {}
 
         character_data["data"] = character_data.get("data", "")
 
@@ -205,17 +205,15 @@ async def on_level_input(message: Message, widget: ManagedTextInput, dialog_mana
 
         character_data["data"] = json.dumps(new_data)
 
-        character.data = character_data
         await character.save()
-
-        await message.answer(f"✅ Уровень изменен на {level}")
+        await message.answer(f"✅ Уровень персонажа изменен на {level}")
         await dialog_manager.switch_to(states.ManageCharacters.character_menu)
 
     except ValueError:
-        await message.answer("❌ Введите целое число")
-    except (IncompleteInstanceError, IntegrityError, OperationalError) as e:
-        logger.exception("Error updating level", exc_info=e)
-        await message.answer("❌ Ошибка при обновлении уровня")
+        await message.answer("❌ Пожалуйста, введите целое число")
+    except Exception as e:
+        logger.exception("Ошибка при изменении уровня персонажа", exc_info=e)
+        await message.answer("❌ Не удалось изменить уровень")
 
 
 async def on_add_character(mes: CallbackQuery, wif: Button, dialog_manager: DialogManager):

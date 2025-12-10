@@ -9,7 +9,7 @@ from aiogram_dialog.widgets.input import ManagedTextInput, TextInput
 from aiogram_dialog.widgets.kbd import Back, Button, Cancel, Next
 from aiogram_dialog.widgets.link_preview import LinkPreview
 from aiogram_dialog.widgets.media import DynamicMedia
-from aiogram_dialog.widgets.text import Const, Format
+from aiogram_dialog.widgets.text import Const, Format, Multi
 
 from db.models import Invitation
 from db.models.campaign import Campaign
@@ -145,13 +145,15 @@ async def on_accept(c: CallbackQuery, _: Button, m: DialogManager):
 
 # === Окна ===
 invite_menu_window = Window(
-    Format(
-        "Отправьте эту ссылку для приглашения: <code>{link}</code>\n"
-        "Или напишите @username гостя здесь\n"
-        "(учтите 1 ссылка – 1 приглашение)"
+    Multi(
+        Const("✉️ Приглашение в кампанию\n"),
+        Format("\nСсылка для приглашения: <code>{link}</code>"),
+        Const("\nИли введите @username пользователя ниже"),
+        Const("(каждая ссылка работает только один раз)"),
+        sep="\n",
     ),
     LinkPreview(is_disabled=False),
-    Button(Const("Сгенерировать новую ссылку"), id="regenerate_link", on_click=on_regenerate_link),
+    Button(Const("🔄 Сгенерировать новую ссылку"), id="regenerate_link", on_click=on_regenerate_link),
     TextInput(
         id="username_input",
         on_success=on_username_entered,
@@ -172,9 +174,9 @@ qr_window = Window(
 
 
 invite_window = Window(
-    Format("Вас пригласили в кампанию <b>{campaign_title}</b> на роль <b>{role}</b>"),
-    Button(Const("Присоединиться"), id="accept_admin", on_click=on_accept),
-    Cancel(Const("Отказаться")),
+    Format("🎉 Вас пригласили в кампанию!\n\n<b>{campaign_title}</b>\nРоль: <b>{role}</b>"),
+    Button(Const("✅ Присоединиться"), id="accept_admin", on_click=on_accept),
+    Cancel(Const("❌ Отказаться")),
     getter=invitation_getter,
     state=states.InviteMenu.invite,
 )
