@@ -5,7 +5,7 @@ from aiogram.filters import CommandObject, CommandStart
 from aiogram.types import Message
 from aiogram_dialog import DialogManager, StartMode
 
-from db.models import Invitation, User
+from db.models import Invitation, Participation, User
 from utils.uuid import is_valid_uuid
 
 from . import states
@@ -62,10 +62,19 @@ async def start_args(message: Message, command: CommandObject, dialog_manager: D
         await message.reply(
             "⚠️ Это приглашение уже было использовано.\n\n"
             "Если вы хотите присоединиться к кампании, попросите мастера "
-            "отправить вам новое приглашение.\n\n"
-            "Если вы уже в этой кампании, используйте обычный /start "
-            "для доступа к своим кампаниям."
+            "отправить вам новое приглашение."
         )
+        return
+
+    participation = await Participation.get_or_none(user=user, campaign=invite.campaign)
+    if participation is not None:
+        logger.info(
+            "User %s used /start in the %s campaign, where he was already invited. It was for %s.",
+            user.id,
+            command.args,
+            invite.user.id,
+        )
+        await message.reply(f"🗳️ Вы уже участвуете в этой кампании в качестве {participation.role}")
         return
 
     logger.debug(
@@ -78,7 +87,10 @@ async def start_args(message: Message, command: CommandObject, dialog_manager: D
     invite.used = True
     await invite.save()
 
-    await dialog_manager.start(states.InviteMenu.invite, data={"invitation_id": invite.id})
+    await dialog_manager.start(
+        states.InviteMenu.invite,
+        data={"invitation_id": invite.id, "campaign_id": invite.campaign.id},
+    )
 
 
 @router.message(CommandStart(deep_link=False))

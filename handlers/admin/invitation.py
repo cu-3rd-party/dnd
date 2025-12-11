@@ -3,7 +3,7 @@ import logging
 from aiogram import Router
 from aiogram.enums import ContentType
 from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
-from aiogram_dialog import Dialog, DialogManager, Window
+from aiogram_dialog import Dialog, DialogManager, StartMode, Window
 from aiogram_dialog.api.entities import MediaAttachment
 from aiogram_dialog.widgets.input import ManagedTextInput, TextInput
 from aiogram_dialog.widgets.kbd import Back, Button, Cancel, Next
@@ -16,7 +16,6 @@ from db.models.campaign import Campaign
 from db.models.user import User
 from services.invitation import handle_accept_invitation, invitation_getter
 from services.settings import settings
-from states.academy_campaigns import AcademyCampaignPreview
 from utils.invitation import generate_link, generate_qr
 from utils.role import Role
 
@@ -46,7 +45,7 @@ async def get_link(dialog_manager: DialogManager, **_):
         dialog_manager.dialog_data["link"] = link
         dialog_manager.dialog_data["invite_id"] = invite.id
 
-    return {"link": link}
+    return {"link": dialog_manager.dialog_data["link"]}
 
 
 async def get_qr(dialog_manager: DialogManager, **_):
@@ -115,27 +114,32 @@ async def on_username_entered(
     await dialog_manager.done()
 
 
-async def on_accept(c: CallbackQuery, _: Button, m: DialogManager):
-    invite_id = m.dialog_data.get("invite_id")
+async def on_accept(msg: CallbackQuery, _: Button, dialog_manager: DialogManager):
+    invite_id = dialog_manager.dialog_data.get("invite_id")
     if not invite_id:
-        await c.answer("❌ Приглашение не найдено", show_alert=True)
-        await m.reset_stack()
+        await msg.answer("❌ Приглашение не найдено", show_alert=True)
+        await dialog_manager.reset_stack()
         return
 
     invite = await Invitation.get_or_none(id=invite_id).prefetch_related("campaign", "created_by")
     if invite is None:
-        await c.answer("❌ Приглашение не найдено", show_alert=True)
-        await m.reset_stack()
+        await msg.answer("❌ Приглашение не найдено", show_alert=True)
+        await dialog_manager.reset_stack()
         return
 
-    user = m.middleware_data["user"]
+    user = dialog_manager.middleware_data["user"]
 
-    participation = await handle_accept_invitation(m, c, user, invite)
+    participation = await handle_accept_invitation(dialog_manager, msg, user, invite)
 
     if invite.campaign.verified:
-        await m.start(
-            AcademyCampaignPreview.preview,
-            data={"campaign_id": invite.campaign.id, "participation_id": participation.id},
+        await dialog_manager.start(
+            states.CampaignList.main,
+            data={
+                "campaign_id": invite.campaign.id,
+                "participation_id": participation.id,
+                "redirect_to": states.CampaignManage.main,
+            },
+            mode=StartMode.RESET_STACK,
         )
     else:
         # TODO @pxc1984: когда доделаем другие игры следует сюда добавить логику активации игры для них

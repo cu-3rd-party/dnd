@@ -9,6 +9,7 @@ from aiogram_dialog.widgets.kbd import Button, ScrollingGroup, Select, Start
 from aiogram_dialog.widgets.text import Const, Format
 
 from db.models.participation import Participation
+from utils.redirect import redirect
 
 from . import states
 
@@ -77,7 +78,8 @@ campaign_list_window = Window(
     getter=get_campaigns_data,
 )
 
+
 # === Создание диалога и роутера ===
-dialog = Dialog(campaign_list_window)
+dialog = Dialog(campaign_list_window, on_start=redirect)
 router = Router()
 router.include_router(dialog)
