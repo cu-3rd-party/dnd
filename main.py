@@ -22,6 +22,7 @@ from db.minio import init_minio, test_minio
 from db.postgres import close_db, init_db, test_db
 from services.settings import settings
 from utils import json
+from utils.minio import MinioMessageManager
 
 logger = logging.getLogger(__name__)
 
@@ -133,7 +134,7 @@ async def run_bot(
     register_all_middlewares(dp, path=MIDDLEWARE_PATH / suffix, package=MIDDLEWARE_PACKAGE + "." + suffix)
     register_all_middlewares(dp, path=MIDDLEWARE_PATH / "shared", package=MIDDLEWARE_PACKAGE + "." + "shared")
     register_all_handlers(dp, path=HANDLERS_PATH / suffix, package=HANDLERS_PACKAGE + "." + suffix)
-    setup_dialogs(dp)
+    setup_dialogs(dp, message_manager=MinioMessageManager())
 
     dp.startup.register(on_startup)
     dp.shutdown.register(on_shutdown)

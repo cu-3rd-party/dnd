@@ -1,11 +1,12 @@
 import logging
-from typing import TYPE_CHECKING
+import uuid
+from typing import TYPE_CHECKING, BinaryIO
 
 from aiogram import Router
 from aiogram.enums import ContentType
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import Dialog, DialogManager, Window
-from aiogram_dialog.api.entities import MediaAttachment, MediaId
+from aiogram_dialog.api.entities import MediaAttachment
 from aiogram_dialog.widgets.input import ManagedTextInput, MessageInput, TextInput
 from aiogram_dialog.widgets.kbd import Back, Button, Cancel, Next, Row
 from aiogram_dialog.widgets.media import DynamicMedia
@@ -28,8 +29,8 @@ logger = logging.getLogger(__name__)
 # === Гетеры ===
 async def get_confirm_data(dialog_manager: DialogManager, **kwargs):
     icon = None
-    if file_id := dialog_manager.dialog_data.get("icon"):
-        icon = MediaAttachment(type=ContentType.PHOTO, file_id=MediaId(file_id))
+    if object_name := dialog_manager.dialog_data.get("icon"):
+        icon = MediaAttachment(type=ContentType.PHOTO, path=f"minio://campaign-icons:{object_name}")
 
     return {
         "title": dialog_manager.dialog_data.get("title", ""),
@@ -59,7 +60,7 @@ async def on_description_entered(
     text: str,
 ):
     if len(text) > settings.MAX_DESCRIPTION_LEN:
-        mes.answer("Максимум 1023 символа, можно пропустить")
+        await mes.answer("Максимум 1023 символа, можно пропустить")
         return
     dialog_manager.dialog_data["description"] = text
     await dialog_manager.next()
@@ -69,9 +70,17 @@ async def on_icon_entered(mes: Message, wid: MessageInput, dialog_manager: Dialo
     if mes.photo:
         photo = mes.photo[-1]
         file = await mes.bot.get_file(photo.file_id)
-        await mes.bot.download_file(file.file_path)
-        settings.minio.append_object()
-        dialog_manager.dialog_data["icon"] = photo.file_id
+        bin_stream: BinaryIO = await mes.bot.download_file(file.file_path)
+
+        object_id = uuid.uuid4()
+        settings.minio.put_object(
+            "campaign-icons",
+            str(object_id),
+            bin_stream,
+            file.file_size,
+        )
+
+        dialog_manager.dialog_data["icon"] = object_id
 
         await dialog_manager.next()
     else:
