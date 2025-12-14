@@ -17,8 +17,8 @@ router = Router()
 
 class InventoryRequest(BaseModel):
     target_type: TargetType
-    target_id: int
-    campaign_id: int | None = None
+    target_id: int | UUID
+    campaign_id: int | UUID | None = None
 
     @classmethod
     @field_validator("target_type", mode="before")

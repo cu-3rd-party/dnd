@@ -9,6 +9,7 @@ from aiogram_dialog.widgets.text import Const, Format
 
 from db.models import Campaign, Character, Participation, User
 from services.character_data import character_preview_getter
+from states.inventory_view import InventoryView, TargetType
 from states.other_games_campaign import OtherGamesCampaign
 from states.other_games_character import OtherGamesCharacter
 
@@ -37,11 +38,25 @@ async def on_campaign_info(c: CallbackQuery, b: Button, m: DialogManager):
     )
 
 
+async def on_inventory(c: CallbackQuery, b: Button, m: DialogManager):
+    character = await Character.get(id=m.start_data["character_id"]).prefetch_related("campaign")
+    campaign: Campaign = character.campaign
+    await m.start(
+        InventoryView.view,
+        data={
+            "target_type": TargetType.CHARACTER,
+            "target_id": m.start_data["character_id"],
+            "campaign_id": campaign.id,
+        },
+    )
+
+
 router.include_router(
     Dialog(
         Window(
             DynamicMedia("avatar", when="avatar"),
             Format("{character_data_preview}", when="character_data_preview"),
+            Button(Const("Посмотреть инвентарь"), id="inventory", on_click=on_inventory),
             Button(Const("Информация о кампании"), id="campaign_info", on_click=on_campaign_info),
             Cancel(Const("Назад")),
             getter=character_data_getter,
