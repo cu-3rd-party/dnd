@@ -8,10 +8,8 @@ from aiogram_dialog.widgets.kbd import Back, Button, Cancel, ScrollingGroup, Sel
 from aiogram_dialog.widgets.text import Const, Format
 
 from db.models import Campaign, Character, Participation, User
-from handlers.player.upload import UploadCharacterRequest
-from states.inventory_view import TargetType
 from states.other_games import OtherGames
-from states.upload_character import UploadCharacter
+from states.other_games_campaign import OtherGamesCampaign
 from utils.character import CharacterData, parse_character_data
 
 router = Router()
@@ -24,8 +22,9 @@ async def main_getter(dialog_manager: DialogManager, **kwargs) -> dict:
         await Character.filter(user=user, campaign__verified=False).prefetch_related("campaign").all()
     )
 
-    characters_data: list[tuple[CharacterData, Campaign]] = [
-        (parse_character_data(json.loads(character.data["data"])), character.campaign) for character in characters
+    characters_data: list[tuple[Character, CharacterData, Campaign]] = [
+        (character, parse_character_data(json.loads(character.data["data"])), character.campaign)
+        for character in characters
     ]
 
     return {
@@ -59,14 +58,8 @@ async def on_campaign_selected(c: CallbackQuery, b: Button, m: DialogManager, pa
     campaign: Campaign = participation.campaign
     character = await Character.get_or_none(user=user, campaign=campaign)
     if character is None:
-        # если нет персонажа -> создай
         await m.start(
-            UploadCharacter.upload,
-            data={
-                "request": UploadCharacterRequest(
-                    target_type=TargetType.CHARACTER, target_id=None, campaign_id=campaign.id
-                )
-            },
+            OtherGamesCampaign.preview, data={"campaign_id": campaign.id, "participation_id": participation.id}
         )
     else:
         ...
@@ -78,7 +71,7 @@ router.include_router(
             Const("Вы находитесь в меню неофициальных игр"),
             ScrollingGroup(
                 Select(
-                    Format("{item[0].name} - {item[1].title}"),
+                    Format("{item[1].name} - {item[2].title}"),
                     id="character_select",
                     items="characters_data",
                     item_id_getter=lambda c: c[0].id,
@@ -93,6 +86,7 @@ router.include_router(
             ),
             Button(Const("Посмотреть доступные кампании"), id="available_games", on_click=on_available_games),
             Cancel(Const("Назад")),
+            getter=main_getter,
             state=OtherGames.main,
         ),
         Window(

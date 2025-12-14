@@ -9,7 +9,6 @@ from aiogram_dialog.widgets.text import Const
 
 from db.models import Invitation, User
 from db.models.participation import Participation
-from handlers.player.upload import UploadCharacterRequest
 from states.academy import Academy
 from states.inventory_view import TargetType
 from states.invitation import InvitationAccept
@@ -113,7 +112,7 @@ async def on_academy(c: CallbackQuery, b: Button, m: DialogManager):
     if user.data is None:
         await m.start(
             UploadCharacter.upload,
-            data={"request": UploadCharacterRequest(target_type=TargetType.USER, target_id=user.id)},
+            data={"target_type": TargetType.USER, "target_id": user.id},
         )
         return
     await m.start(Academy.main)

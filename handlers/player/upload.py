@@ -85,15 +85,16 @@ async def upload_document(msg: Message, _: MessageInput, manager: DialogManager)
     content = f.read()
 
     user = manager.middleware_data["user"]
-    request: UploadCharacterRequest = manager.start_data.get("request")
+    request = UploadCharacterRequest(**manager.start_data)
 
     source: CharacterData
     if request.target_type == TargetType.USER:
         source = user
     elif request.target_type == TargetType.CHARACTER:
-        source, _created = await Character.get_or_create(
-            id=request.target_id, defaults={"user": user, "campaign_id": request.campaign_id}
-        )
+        if request.target_id is None:
+            source = await Character.create(user=user, campaign_id=request.campaign_id)
+        else:
+            source = await Character.get(id=request.target_id)
     else:
         logger.error("Failed to find source for user %d", user)
         return
