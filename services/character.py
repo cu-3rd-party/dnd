@@ -102,8 +102,8 @@ STATS_CONVERSION = {
     "cha": "Харизма",
 }
 
-def parse_character_data(data: dict) -> CharacterData:
 
+def parse_character_data(data: dict) -> CharacterData:
     """
     Превращает json персонажа Long Story Short в адекватный Pydantic объект
     """
