@@ -3,9 +3,9 @@ import json
 from aiogram import Router
 from aiogram.types import CallbackQuery
 from aiogram_dialog import Dialog, DialogManager, Window
-from aiogram_dialog.widgets.kbd import Button, Cancel
+from aiogram_dialog.widgets.kbd import Button, Cancel, Column, Row
 from aiogram_dialog.widgets.media import DynamicMedia
-from aiogram_dialog.widgets.text import Const, Format
+from aiogram_dialog.widgets.text import Const, Format, Multi
 
 from db.models import Campaign, Character, Participation, User
 from services.character_data import character_preview_getter
@@ -21,7 +21,12 @@ async def character_data_getter(dialog_manager: DialogManager, **kwargs) -> dict
     character = await Character.get(id=dialog_manager.start_data["character_id"])
     data = json.loads(character.data["data"])
 
-    return character_preview_getter(character, data)
+    character_preview = character_preview_getter(character, data)
+
+    return {
+        **character_preview,
+        "has_character_data": character_preview.get("character_data_preview") not in [None, ""],
+    }
 
 
 async def on_campaign_info(c: CallbackQuery, b: Button, m: DialogManager):
@@ -63,17 +68,26 @@ async def on_upload_json(c: CallbackQuery, b: Button, m: DialogManager):
     )
 
 
-router.include_router(
-    Dialog(
-        Window(
-            DynamicMedia("avatar", when="avatar"),
-            Format("{character_data_preview}", when="character_data_preview"),
-            Button(Const("Посмотреть инвентарь"), id="inventory", on_click=on_inventory),
-            Button(Const("Информация о кампании"), id="campaign_info", on_click=on_campaign_info),
-            Button(Const("Загрузить обновленный .json"), id="update_json", on_click=on_upload_json),
-            Cancel(Const("Назад")),
-            getter=character_data_getter,
-            state=OtherGamesCharacter.preview,
-        )
+character_dialog = Dialog(
+    Window(
+        Multi(
+            Const("👤 Персонаж"),
+            Const(""),
+        ),
+        DynamicMedia("avatar", when="avatar"),
+        Format("{character_data_preview}", when="character_data_preview"),
+        Const("📭 У персонажа нет данных", when=lambda data, *_: not data.get("character_data_preview", "")),
+        Column(
+            Row(
+                Button(Const("🎒 Инвентарь"), id="inventory", on_click=on_inventory),
+                Button(Const("🏰 Кампания"), id="campaign_info", on_click=on_campaign_info),
+            ),
+            Button(Const("📤 Обновить .json"), id="update_json", on_click=on_upload_json),
+            Cancel(Const("⬅️ Назад")),
+        ),
+        getter=character_data_getter,
+        state=OtherGamesCharacter.preview,
     )
 )
+
+router.include_router(character_dialog)

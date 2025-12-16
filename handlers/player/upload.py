@@ -9,13 +9,15 @@ from aiogram.types import Message
 from aiogram_dialog import Dialog, DialogManager, Window
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Cancel
-from aiogram_dialog.widgets.text import Const
-from pydantic import BaseModel, field_validator
+from aiogram_dialog.widgets.link_preview import LinkPreview
+from aiogram_dialog.widgets.text import Const, Multi
+from pydantic import BaseModel, ValidationError, field_validator
 
 from db.models import Character
 from services.character_data import update_char_data
 from states.inventory_view import TargetType
 from states.upload_character import UploadCharacter
+from utils.character import parse_character_data
 
 if TYPE_CHECKING:
     from db.models.base import CharacterData
@@ -77,7 +79,7 @@ class UploadCharacterRequest(BaseModel):
 
 async def upload_document(msg: Message, _: MessageInput, manager: DialogManager):
     if not msg.document or not msg.document.file_name.endswith(".json"):
-        await msg.answer("Отправь .json!")
+        await msg.answer("❌ Пожалуйста, отправьте файл в формате .json!")
         logger.warning("User %d didn't send us a valid json", msg.from_user.id)
         return
 
@@ -104,30 +106,46 @@ async def upload_document(msg: Message, _: MessageInput, manager: DialogManager)
         return
 
     try:
-        await update_char_data(source, json.loads(content.decode("utf-8")))
+        data = json.loads(content.decode("utf-8"))
+        parse_character_data(data)
+        await update_char_data(source, data)
     except UnicodeDecodeError:
         logger.warning("Failed to unicode decode payload from user %d", msg.from_user.id)
-        await msg.answer("Это не json, проверь еще раз")
+        await msg.answer("❌ Не удалось прочитать файл. Убедитесь, что это корректный JSON-файл.")
         return
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, ValidationError):
         logger.warning("User %d sent incorrect json", msg.from_user.id)
-        await msg.answer("Это не json, проверь еще раз")
+        await msg.answer("❌ Это невалидный JSON-файл. Проверьте его содержимое.")
         return
 
-    await msg.answer("Успешно загружено")
+    await msg.answer("✅ Данные персонажа успешно загружены!")
     await manager.done()
+
+
+async def has_data(dialog_manager: DialogManager, **kwargs):
+    return {"has_data": dialog_manager.middleware_data["user"].data}
 
 
 """
 Этот диалог обязательно должен включать в start_data параметр request: UploadCharacterRequest
 """
-router.include_router(
-    Dialog(
-        Window(
-            Const("Отправь нам .json из LSH"),
-            Cancel(Const("Отмена")),
-            MessageInput(content_types=ContentType.DOCUMENT, func=upload_document),
-            state=UploadCharacter.upload,
+upload_dialog = Dialog(
+    Window(
+        Multi(
+            Const("📤 Загрузка персонажа"),
+            Const(""),
+            Const("Отправьте файл персонажа в формате .json."),
+            Const('Файл должен быть экспортирован из <a href="https://longstoryshort.app/characters/list/">LSH</a>.'),
+            Const(""),
+            Const("⚠️ Внимание: существующие данные будут перезаписаны.", when=""),
+            sep="\n",
         ),
-    )
+        LinkPreview(is_disabled=True),
+        Cancel(Const("❌ Отмена")),
+        MessageInput(content_types=ContentType.DOCUMENT, func=upload_document),
+        getter=has_data,
+        state=UploadCharacter.upload,
+    ),
 )
+
+router.include_router(upload_dialog)

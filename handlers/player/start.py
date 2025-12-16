@@ -5,7 +5,7 @@ from aiogram.filters import CommandObject, CommandStart
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import Dialog, DialogManager, Window
 from aiogram_dialog.widgets.kbd import Button, Column
-from aiogram_dialog.widgets.text import Const
+from aiogram_dialog.widgets.text import Const, Multi
 
 from db.models import Invitation, User
 from db.models.participation import Participation
@@ -84,9 +84,8 @@ async def start_args(message: Message, command: CommandObject, dialog_manager: D
             command.args,
             invite.user.id,
         )
-        await message.reply(
-            f"🗳️ Вы уже участвуете в этой кампании в качестве {'игрока' if (i := participation.role == 0) else str(i)}"
-        )
+        role_name = "игрока" if participation.role.value == 0 else participation.role.name
+        await message.reply(f"🗳️ Вы уже участвуете в этой кампании в качестве {role_name}")
         return
 
     logger.debug(
@@ -122,18 +121,25 @@ async def on_other(c: CallbackQuery, b: Button, m: DialogManager):
     await m.start(OtherGames.main)
 
 
-router.include_router(
-    Dialog(
-        Window(
-            Const("Обычный /start"),
-            Column(
-                Button(Const("Академия"), id="academy", on_click=on_academy),
-                Button(Const("Другие игры"), id="other_games", on_click=on_other),
-                # TODO (@pxc1984): Добавить ближайшие встречи
-                #    https://github.com/cu-tabletop/dnd/issues/11
-            ),
-            state=StartSimple.simple,
+start_dialog = Dialog(
+    Window(
+        Multi(
+            Const("🎲 Добро пожаловать!"),
+            Const(""),
+            Const("Я - бот для настольных ролевых игр."),
+            Const(""),
+            Const("Выберите раздел для продолжения:"),
+            sep="\n",
         ),
-        on_start=redirect,
-    )
+        Column(
+            Button(Const("🎓 Академия"), id="academy", on_click=on_academy),
+            Button(Const("🎮 Другие игры"), id="other_games", on_click=on_other),
+            # TODO (@pxc1984): Добавить ближайшие встречи
+            #    https://github.com/cu-tabletop/dnd/issues/11
+        ),
+        state=StartSimple.simple,
+    ),
+    on_start=redirect,
 )
+
+router.include_router(start_dialog)

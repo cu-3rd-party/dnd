@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     DB_PASSWORD: str = Field(default="admin", alias="POSTGRES_PASSWORD")
 
     # ^ Minio
-    MINIO_HOST: str = "localhost"
+    MINIO_HOST: str = "minio"
     MINIO_PORT: str = "9000"
     MINIO_ROOT_USER: str = Field(default="admin", alias="MINIO_ROOT_USER")
     MINIO_ROOT_PASSWORD: str = Field(default="admin", alias="MINIO_ROOT_PASSWORD")

@@ -4,8 +4,8 @@ from uuid import UUID
 from aiogram import F, Router
 from aiogram.types import CallbackQuery
 from aiogram_dialog import Dialog, DialogManager, Window
-from aiogram_dialog.widgets.kbd import Back, Button, Cancel, ScrollingGroup, Select
-from aiogram_dialog.widgets.text import Const, Format
+from aiogram_dialog.widgets.kbd import Back, Cancel, ScrollingGroup, Select
+from aiogram_dialog.widgets.text import Const, Format, Multi
 from pydantic import BaseModel, field_validator
 
 from db.models import Campaign, Item
@@ -59,6 +59,7 @@ async def inventory_data_getter(dialog_manager: DialogManager, **kwargs) -> dict
     return {
         "inventory": items,
         "has_items": len(items) > 0,
+        "items_count": len(items),
     }
 
 
@@ -69,45 +70,59 @@ async def get_inventory_item_data(dialog_manager: DialogManager, **kwargs):
         return {"item": None}
 
     item = await Item.get(id=item_id)
-    return {"item": item, "has_description": item.description != ""}
+    return {
+        "item": item,
+        "has_description": item.description != "",
+        "is_empty": item.description == "",
+    }
 
 
-async def on_inventory_item_selected(c: CallbackQuery, b: Button, m: DialogManager, item_id: UUID):
+async def on_inventory_item_selected(c: CallbackQuery, b: Select, m: DialogManager, item_id: UUID):
     m.dialog_data["selected_item_id"] = item_id
     await m.switch_to(InventoryView.preview)
 
 
-router.include_router(
-    Dialog(
-        Window(
-            Format("Инвентарь персонажа"),
-            ScrollingGroup(
-                Select(
-                    Format("{item.title} ×{item.quantity}"),
-                    id="inventory_select",
-                    item_id_getter=lambda item: item.id,
-                    items="inventory",
-                    on_click=on_inventory_item_selected,
-                    type_factory=UUID,
-                ),
-                id="inventory_scroll",
-                width=1,
-                height=10,
-                hide_on_single_page=True,
-                when="has_items",
+inventory_dialog = Dialog(
+    Window(
+        Multi(
+            Const("🎒 Инвентарь персонажа"),
+            Const(""),
+            Format("📦 Всего предметов: {items_count}", when="has_items"),
+            Const("📭 Инвентарь пуст", when=lambda data, *_: not data.get("has_items", False)),
+            Const("Выберите предмет для просмотра:"),
+            sep="\n",
+        ),
+        ScrollingGroup(
+            Select(
+                Format("📦 {item.title} ×{item.quantity}"),
+                id="inventory_select",
+                item_id_getter=lambda item: item.id,
+                items="inventory",
+                on_click=on_inventory_item_selected,
+                type_factory=UUID,
             ),
-            Cancel(Const("Назад")),
-            getter=inventory_data_getter,
-            state=InventoryView.view,
+            id="inventory_scroll",
+            width=1,
+            height=8,
+            hide_on_single_page=True,
+            when="has_items",
         ),
-        Window(
-            Format("📦 {item.title}"),
+        Cancel(Const("⬅️ Назад")),
+        getter=inventory_data_getter,
+        state=InventoryView.view,
+    ),
+    Window(
+        Multi(
+            Format("📦 Предмет: {item.title}"),
+            Const(""),
             Format("📝 Описание: {item.description}", when="has_description"),
-            Const("📝 Описание отсутствует", when=~F["has_description"]),
+            Const("📭 Описание отсутствует", when=~F["has_description"]),
             Format("🔢 Количество: {item.quantity}"),
-            Back(Const("Назад")),
-            getter=get_inventory_item_data,
-            state=InventoryView.preview,
         ),
-    )
+        Back(Const("⬅️ Назад к инвентарю")),
+        getter=get_inventory_item_data,
+        state=InventoryView.preview,
+    ),
 )
+
+router.include_router(inventory_dialog)

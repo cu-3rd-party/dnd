@@ -6,7 +6,7 @@ from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMar
 from aiogram_dialog import Dialog, DialogManager, StartMode, Window
 from aiogram_dialog.api.entities import MediaAttachment
 from aiogram_dialog.widgets.input import ManagedTextInput, TextInput
-from aiogram_dialog.widgets.kbd import Back, Button, Cancel, Next
+from aiogram_dialog.widgets.kbd import Back, Button, Cancel, Next, Row
 from aiogram_dialog.widgets.link_preview import LinkPreview
 from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format, Multi
@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 async def get_link(dialog_manager: DialogManager, **_):
     created_by: User = dialog_manager.middleware_data["user"]
 
-    link = dialog_manager.dialog_data.get("link")
+    link = dialog_manager.dialog_data.get("link", "")
     if "link" not in dialog_manager.dialog_data and isinstance(dialog_manager.start_data, dict):
         campaign_id = dialog_manager.start_data.get("campaign_id", 0)
         role = dialog_manager.start_data.get("role", Role.PLAYER)
@@ -177,15 +177,23 @@ qr_window = Window(
     getter=get_qr,
 )
 
-
 invite_window = Window(
-    Format("🎉 Вас пригласили в кампанию!\n\n<b>{campaign_title}</b>\nРоль: <b>{role}</b>"),
-    Button(Const("✅ Присоединиться"), id="accept_admin", on_click=on_accept),
-    Cancel(Const("❌ Отказаться")),
+    Multi(
+        Const("🎉 Вам пришло приглашение!"),
+        Const(""),
+        Format("🏰 Кампания: <b>{campaign_title}</b>"),
+        Format("👑 Роль: <b>{role}</b>"),
+        Const(""),
+        Const("Присоединиться к кампании?"),
+        sep="\n",
+    ),
+    Row(
+        Button(Const("✅ Присоединиться"), id="accept_admin", on_click=on_accept),
+        Cancel(Const("❌ Отказаться")),
+    ),
     getter=invitation_getter,
     state=states.InviteMenu.invite,
 )
-
 
 # === Создание диалога и роутера ===
 dialog = Dialog(invite_menu_window, qr_window, invite_window)

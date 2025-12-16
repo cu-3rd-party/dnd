@@ -256,7 +256,7 @@ add_inventory_item_window = Window(
 )
 
 add_item_description_window = Window(
-    Format("Название {new_item_name}"),
+    Format("📦 Название: {new_item_name}"),
     Const("📝 Введите описание предмета (или '-' чтобы пропустить):"),
     TextInput(
         id="item_description_input",
@@ -268,8 +268,8 @@ add_item_description_window = Window(
 )
 
 add_item_quantity_window = Window(
-    Format("Название: {new_item_name}"),
-    Format("Описание {new_item_description}"),
+    Format("📦 Название: {new_item_name}"),
+    Format("📄 Описание {new_item_description}"),
     Const("🔢 Введите количество предмета:"),
     TextInput(
         id="item_quantity_input",
@@ -283,32 +283,31 @@ add_item_quantity_window = Window(
 edit_inventory_item_window = Window(
     Multi(
         Const("✏️ Редактирование предмета"),
-        Format("📦 {item.title}"),
+        Format("📦 Название: {item.title}"),
         Format("📝 Описание: {item.description}", when="has_description"),
-        Const("📝 Описание отсутствует", when=lambda data, *_: not data.get("item", {}).description),
+        Const("📭 Описание отсутствует", when=lambda data, *_: not data.get("item", {}).description),
         Format("🔢 Количество: {item.quantity}"),
-        Const(""),
-        Const("Выберите что изменить:"),
+        Const("\nВыберите что изменить:"),
         sep="\n",
     ),
     Group(
         SwitchTo(
-            Const("✏️ Название"),
+            Const("✏️ Изменить название"),
             id="edit_name",
             state=states.ManageInventory.edit_inventory_item_name,
         ),
         SwitchTo(
-            Const("📝 Описание"),
+            Const("📝 Изменить описание"),
             id="edit_description",
             state=states.ManageInventory.edit_inventory_item_description,
         ),
         SwitchTo(
-            Const("🔢 Количество"),
+            Const("🔢 Изменить количество"),
             id="edit_quantity",
             state=states.ManageInventory.edit_inventory_item_quantity,
         ),
         SwitchTo(
-            Const("🗑️ Удалить"),
+            Const("🗑️ Удалить предмет"),
             id="delete_item",
             state=states.ManageInventory.accept_delete,
         ),
@@ -354,7 +353,7 @@ edit_item_quantity_window = Window(
 )
 
 accept_delete_item_window = Window(
-    Const("🎯 Точно удалить?"),
+    Const("⚠️ Вы точно хотите удалить этот предмет?"),
     Button(
         Const("🚫 Удалить"),
         id="accept_delete",

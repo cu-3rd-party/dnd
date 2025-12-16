@@ -4,9 +4,9 @@ import logging
 from aiogram import Router
 from aiogram.types import CallbackQuery
 from aiogram_dialog import Dialog, DialogManager, Window
-from aiogram_dialog.widgets.kbd import Button, Cancel, Column
+from aiogram_dialog.widgets.kbd import Button, Cancel, Column, Row
 from aiogram_dialog.widgets.media import DynamicMedia
-from aiogram_dialog.widgets.text import Const, Format
+from aiogram_dialog.widgets.text import Const, Format, Multi
 
 from services.character_data import character_preview_getter
 from states.academy import Academy
@@ -41,26 +41,46 @@ async def on_campaigns(c: CallbackQuery, b: Button, m: DialogManager):
 
 async def character_data_getter(dialog_manager: DialogManager, **kwargs) -> dict:
     user = dialog_manager.middleware_data["user"]
-    data = json.loads(user.data["data"])
 
-    return character_preview_getter(user, data)
+    if user.data is None:
+        return {"has_character_data": False, "avatar": False}
+
+    data = json.loads(user.data.get("data", "{}"))
+
+    character_preview = character_preview_getter(user, data)
+
+    return {
+        **character_preview,
+        "has_character_data": True,
+    }
 
 
-router.include_router(
-    Dialog(
-        Window(
-            DynamicMedia("avatar", when="avatar"),
-            Format("{character_data_preview}", when="character_data_preview"),
-            Column(
-                Button(Const("Посмотреть инвентарь"), id="inventory", on_click=on_inventory),
-                Button(Const("Загрузить обновленный .json"), id="update_json", on_click=on_update),
-                Button(Const("Рейтинг"), id="rating", on_click=on_rating),
-                Button(Const("Кампании внутри академии"), id="campaigns", on_click=on_campaigns),
-                Cancel(Const("Назад")),
-            ),
-            getter=character_data_getter,
-            state=Academy.main,
+academy_dialog = Dialog(
+    Window(
+        Multi(
+            Const("🎓 Ваш профиль в академии"),
+            Const(""),
         ),
-        on_start=redirect,
-    )
+        DynamicMedia("avatar", when="avatar"),
+        Format("{character_data_preview}", when="has_character_data"),
+        Const(
+            "📭 У вас пока нет загруженного персонажа", when=lambda data, *_: not data.get("has_character_data", False)
+        ),
+        Column(
+            Row(
+                Button(Const("🏰 Кампании"), id="campaigns", on_click=on_campaigns),
+                Button(Const("🎒 Инвентарь"), id="inventory", on_click=on_inventory),
+            ),
+            Row(
+                Button(Const("📈 Рейтинг"), id="rating", on_click=on_rating),
+                Button(Const("📤 Обновить .json"), id="update_json", on_click=on_update),
+            ),
+            Cancel(Const("⬅️ Назад")),
+        ),
+        getter=character_data_getter,
+        state=Academy.main,
+    ),
+    on_start=redirect,
 )
+
+router.include_router(academy_dialog)
