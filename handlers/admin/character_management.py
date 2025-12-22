@@ -168,12 +168,13 @@ async def on_rating_input(message: Message, widget: ManagedTextInput, dialog_man
     """Обработчик ввода нового рейтинга"""
     try:
         rating = int(text)
-        if abs(rating) > settings.MAX_ONE_TIME_RATING:
-            await message.answer(f"❌ Изменение рейтинга не может превышать {settings.MAX_ONE_TIME_RATING} за раз")
-            return
         character_id = dialog_manager.dialog_data["character_id"]
 
         user = await User.get(id=character_id)
+
+        if abs(user.rating - rating) > settings.MAX_ONE_TIME_RATING:
+            await message.answer(f"❌ Изменение рейтинга не может превышать {settings.MAX_ONE_TIME_RATING} за раз")
+            return
 
         rating = min(max(0, rating), settings.MAX_RATING)
 
